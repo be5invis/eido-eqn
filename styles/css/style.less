@@ -1,0 +1,211 @@
+
+@font-face {
+    font-family: 'Math';
+    font-weight: bold;
+    font-style: italic;
+    src: local("Verdandi Modern Bold Italic"),
+         url('../font/Verdandi-Modern-BoldItalic.woff') format('woff'),
+         url('../font/Verdandi-Modern-BoldItalic.ttf') format('truetype');
+}@font-face {
+    font-family: 'Math';
+    font-weight: normal;
+    font-style: italic;
+    src: local("Verdandi Modern Italic"),
+         url('../font/Verdandi-Modern-Italic.woff') format('woff'),
+         url('../font/Verdandi-Modern-Italic.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Math';
+    font-weight: bold;
+    font-style: normal;
+    src: local("Verdandi Modern Bold"),
+         url('../font/Verdandi-Modern-Bold.woff') format('woff'),
+         url('../font/Verdandi-Modern-Bold.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Math';
+    font-weight: normal;
+    font-style: normal;
+    src: local("Verdandi Modern Roman"), local("Verdandi Modern Regular"), local("Verdandi Modern"),
+         url('../font/Verdandi-Modern-Roman.woff') format('woff'),
+         url('../font/Verdandi-Modern-Roman.ttf') format('truetype');
+}
+
+
+@font-face {
+	font-family: "Math";
+	font-weight: bold;
+	font-style: italic;
+	src: local("Symbola"), 
+	     url('../font/Symbola_kh.woff') format('woff'), 
+	     url('../font/Symbola_kh.otf') format('opentype');
+	unicode-range: U+21-2F, U+3A-40, U+5B-60, U+7B-7F, U+A0-BF, U+D7, U+F7, U+2000-FFFF, U+10000-FFFFF;
+}
+@font-face {
+	font-family: "Math";
+	font-weight: normal;
+    font-style: italic;
+	src: local("Symbola"), 
+	     url('../font/Symbola_kh.woff') format('woff'), 
+	     url('../font/Symbola_kh.otf') format('opentype');
+	unicode-range: U+21-2F, U+3A-40, U+5B-60, U+7B-7F, U+A0-BF, U+D7, U+F7, U+2000-FFFF, U+10000-FFFFF;
+}
+@font-face {
+	font-family: "Math";
+	font-weight: bold;
+	font-style: normal;
+	src: local("Symbola"), 
+	     url('../font/Symbola_kh.woff') format('woff'), 
+	     url('../font/Symbola_kh.otf') format('opentype');
+	unicode-range: U+21-2F, U+3A-40, U+5B-60, U+7B-7F, U+A0-BF, U+D7, U+F7, U+2000-FFFF, U+10000-FFFFF;
+}
+@font-face {
+	font-family: "Math";
+	font-weight: normal;
+	font-style: normal;
+	src: local("Symbola Regular"), local("Symbola"), 
+	     url('../font/Symbola_kh.woff') format('woff'), 
+	     url('../font/Symbola_kh.otf') format('opentype');
+	unicode-range: U+21-2F, U+3A-40, U+5B-60, U+7B-7F, U+A0-BF, U+D7, U+F7, U+2000-FFFF, U+10000-FFFFF;
+}
+
+// equations
+.eqn {
+	font-family: "Math", "Verdandi Modern", "Linux Libertine", "Times New Roman";
+	i {font-style: normal; vertical-align: 0; line-height: 1.2}
+	> s {
+		text-decoration: none;
+		> .ei {
+			.e;
+			position:relative;
+		}
+		display: inline-block;
+		text-align: left;
+	}
+	.aFont & {
+		font-family: "MathSymbols", "Verdandi Modern", serif
+	}
+	.e () {
+		display: inline-block;
+	}
+	.b () {
+		display: block;
+		white-space: nowrap;
+	}
+	.h {
+		display: none;
+	}
+
+	.bb, .bo {
+		.e;
+		transform-origin: 50% 50%;
+		-webkit-transform-origin: 50% 50%;
+		-moz-transform-origin: 50% 50%;
+		-ms-transform-origin: 50% 50%;
+		-o-transform-origin: 50% 50%;
+	}
+	.fb {
+		.e;
+		vertical-align: middle;
+		> .num, > .den, > .fdv {
+			.b;
+			position: relative;
+		}
+		> .num, > .den {
+			padding: 0 0.2em;
+			text-align: center;
+		}
+		> .fdv {
+			height: 1px;
+			background: black;
+			overflow: hidden;
+			margin: -1px 0 0 0;
+		}
+	}
+
+	.sqrt {
+		display: inline-block;
+		padding-left: 1em;
+		position: relative;
+		&:before {
+			content: ' ';
+			display: block;
+			position: absolute;
+			top: -1px;
+			left: 0;
+			bottom: 0;
+			width: 1em;
+			background: url(../font/sqrt.svg);
+			background-size: 1em 100%;
+			background-position: left top;
+			background-repeat: no-repeat;
+		}
+		.i {
+			.e;
+			display: inline-block;
+			border-top: 1px solid black;
+			margin-top: -1px;
+		}
+	}
+
+	.sg {
+		.e;
+		> .ss {
+			.e;
+			vertical-align: top;
+			height: 0;
+			position: relative;
+			> .ssi {
+				display: block;
+				text-align: left;
+				position: relative;
+				> sup, > sub {
+					.b;
+					font-size: 1em;
+					display: block;
+					vertical-align: baseline;
+					text-align: left;
+					position: relative;
+					.op {
+						&:before, &:after {
+							content: '';
+						}						
+					}
+				}
+			}
+		}
+	}
+	.sc {
+		.e;
+		vertical-align: middle;
+	}
+	.op {
+		&:before {
+			content: '\2009';
+		}
+		&:after {
+			content: '\2009';
+		}
+	}
+	.sp {
+		white-space: pre-wrap;
+	}
+}
+
+div.eqn-display {
+	text-align: center;
+	> .eqn-display-i {
+		text-align: left;
+		display: inline-block;
+	}
+}
+table.eqn-align {
+	margin-left: auto;
+	margin-right: auto;
+	min-width: 0;
+	box-shadow: none;
+	border: none;
+	td {
+		padding:0 0.2em;
+	}
+}
