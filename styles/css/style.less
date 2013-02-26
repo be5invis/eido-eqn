@@ -167,9 +167,7 @@
 					text-align: left;
 					position: relative;
 					.op {
-						&:before, &:after {
-							content: '';
-						}						
+						margin: 0;				
 					}
 				}
 			}
@@ -180,12 +178,8 @@
 		vertical-align: middle;
 	}
 	.op {
-		&:before {
-			content: '\2009';
-		}
-		&:after {
-			content: '\2009';
-		}
+		margin-left: 0.17em;
+		margin-right: 0.17em;
 	}
 	.sp {
 		white-space: pre-wrap;
