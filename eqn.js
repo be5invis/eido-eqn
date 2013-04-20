@@ -67,7 +67,7 @@ OpBox.prototype.breakAfter  = true;
 OpBox.prototype.spaceBefore = true;
 OpBox.prototype.spaceAfter  = true;
 OpBox.prototype.write = function(){
-	return '<i class="op">' + this.c + '</i>'
+	return '\u205f<i class="op">' + this.c + '</i>\u205f'
 }
 var SpBox = function(c){
 	this.height = CHAR_ASC
@@ -89,7 +89,7 @@ BCBox.prototype = new CBox;
 BCBox.prototype.breakAfter  = true;
 BCBox.prototype.spaceAfter  = true;
 BCBox.prototype.write = function(){
-	return this.c + ' '
+	return this.c + '\u205f'
 }
 var ScaleBox = function(scale, b){
 	this.content = b;
@@ -225,14 +225,14 @@ BBox.prototype.write = function(){
 	var SCALE_V = Math.ceil(8 * Math.max(1, contentUpperHeight / halfBracketHeight, contentLowerDepth / halfBracketHeight)) / 8;
 	if(SCALE_V <= 1.1) {
 		SCALE_V = 1;
-		return '<i class="bn">' + this.left.write() + '</i>' + this.content.write() + '<i class="bn">' + this.right.write() + '</i>';
+		return '<i class="bn l">' + this.left.write() + '</i>' + this.content.write() + '<i class="bn r">' + this.right.write() + '</i>';
 	} else {
 		var SCALE_H = Math.min(2, 1 + 0.25 * (SCALE_V - 1));
 		var baselineAdjustment = - (halfwayHeight * SCALE_H - halfwayHeight) / SCALE_H;
 		var auxStyle = 'font-size:' + (SCALE_H * 100) + '%;vertical-align:' + EMDIST(baselineAdjustment);
-		return (this.left.c ? scale_span(1, SCALE_V / SCALE_H, this.left.write(), null, auxStyle) : '')
+		return (this.left.c ? scale_span(1, SCALE_V / SCALE_H, this.left.write(), 'bb l', auxStyle) : '')
 		       + this.content.write() 
-		       + (this.right.c ? scale_span(1, SCALE_V / SCALE_H, this.right.write(), null, auxStyle) : '')
+		       + (this.right.c ? scale_span(1, SCALE_V / SCALE_H, this.right.write(), 'bb r', auxStyle) : '')
 	}
 }
 
@@ -326,7 +326,6 @@ BigOpBox.prototype.write = function(){
 		EMDIST(- (this.halfwayHeight * this.scale - this.halfwayHeight) / (this.scale)) + '">' + this.content.write() + '</i>'
 }
 
-
 var layoutSegment = function(parts){
 	if(!parts.length) return '';
 	var h = 0
@@ -338,8 +337,8 @@ var layoutSegment = function(parts){
 		if(d < parts[i].depth)  d = parts[i].depth
 	}
 	var shift = h - Math.max(h, d);
-	var spacesBefore = buf.match(/^\s*/)[0] || '';
-	var spacesAfter = buf.match(/\s*$/)[0] || '';
+	var spacesBefore = buf.match(/^[\s\u2009\u205f]*/)[0] || '';
+	var spacesAfter = buf.match(/[\s\u2009\u205f]*$/)[0] || '';
 	if(shift < 0.002 && shift > -0.002){
 		return spacesBefore + '<s style="height:' + EMDIST((h + d)) + '">' + buf.trim() + '</s>' + spacesAfter
 	} else {
@@ -396,7 +395,7 @@ var marco = {};
 	};
 	var lex = function(s){
 		var q = [];
-		walk(/("(?:[^\\\"]|\\.)*")|(`(?:[^`]|``)*`)|([a-zA-Z0-9\.]+)|([\[\]\(\)\{\}])|(,|[\/<>?:';|\\\-_+=~!@#$%^&*]+)/g, s, function(m, text, tt, id, b, sy){
+		walk(/("(?:[^\\\"]|\\.)*")|(`(?:[^`]|``)*`)|([a-zA-Z0-9\.\u0080-\uffff]+)|([\[\]\(\)\{\}])|(,|[\/<>?:';|\\\-_+=~!@#$%^&*]+)/g, s, function(m, text, tt, id, b, sy){
 			if(text) q.push({type: TEXT, c: text.replace(/\\"/g, '"')})
 			if(tt) q.push({type: TT, c: tt})
 			if(id) q.push({type: ID, c: id})
@@ -880,8 +879,8 @@ marco['\''] = marco.prime;
 marco.union = marco.cup
 marco.intersect = marco.cap
 
-marco[','] = function(){return new BCBox(', ')};
-marco[';'] = function(){return new BCBox('; ')};
+marco[','] = function(){return new BCBox(',')};
+marco[';'] = function(){return new BCBox(';')};
 marco['|'] = CBM('\u2223');
 marco['||'] = CBM('\u2223\u2223');
 marco['divides'] = OBM('\u2223');
@@ -903,13 +902,16 @@ marco.inf = OBM('inf')
 marco.lcbr = CBM('\u27E8')
 marco.rcbr = CBM('\u27e9')
 marco.ket  = function(content){
-	return new BBox('\u2223', content, '\u27e9')
+	return new BBox('\u2009\u2223', content, '\u27e9')
 }
 marco.bra  = function(content){
-	return new BBox('\u27e8', content, '\u2223')
+	return new BBox('\u27e8', content, '\u2223\u2009')
 }
 marco.braket = function(content){
 	return new BBox('\u27e8', content, '\u27e9')
+}
+marco.regexbrackets = function(content){
+	return new BBox('\u2308', content, '\u230b')
 }
 marco.left = function(bracketLeft, content){
 	if(bracketLeft instanceof CBox){
