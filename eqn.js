@@ -7,7 +7,10 @@ var SUB_SHIFT = 0.1
 var FRAC_PADDING = 0.1
 var POSITION_SHIFT = 0
 var OPERATOR_SCALE = 1.5
+var BIGOP_SHIFT = -0.25
 var INTEGRATE_SCALE = 2
+var SSSTACK_MARGIN_SUP = 0.1
+var SSSTACK_MARGIN_SUB = 0.75
 
 var EMDIST = function(x){
 	return x.toFixed(4).replace(/\.?0+$/, '') + 'em'
@@ -91,15 +94,20 @@ BCBox.prototype.spaceAfter  = true;
 BCBox.prototype.write = function(){
 	return this.c + '\u205f'
 }
-var ScaleBox = function(scale, b){
+var ScaleBox = function(scale, b, baselineShift){
 	this.content = b;
 	this.scale = scale;
 	this.height = b.height * scale;
 	this.depth = b.depth * scale;
+	this.baselineShift = baselineShift;
 }
 ScaleBox.prototype = new Box;
 ScaleBox.prototype.write = function(){
-	return '<i style="font-size:' + EMDIST(this.scale) + '">' + this.content.write() + '</i>'
+	if(this.baselineShift){
+		return '<i style="font-size:' + EMDIST(this.scale) + ';position:relative;top:' + EMDIST(-this.baselineShift) + '">' + this.content.write() + '</i>'
+	} else {
+		return '<i style="font-size:' + EMDIST(this.scale) + '">' + this.content.write() + '</i>'
+	}
 }
 
 var FracBox = function(num, den){
@@ -147,7 +155,7 @@ Stack2Box.prototype.write = function() {
 		+ '</i>'
 }
 
-var StackBox = function(parts){
+var StackBox = function(parts, align){
 	this.parts = [];
 	var v = 0;
 	for(var i = 0; i < parts.length; i++){
@@ -158,6 +166,7 @@ var StackBox = function(parts){
 	}
 	this.height = v / 2 + FRAC_SHIFT_MID;
 	this.depth = v / 2 - FRAC_SHIFT_MID;
+	this.align = align;
 }
 StackBox.prototype = new Box;
 StackBox.prototype.write = function(_h, _d){
@@ -166,7 +175,7 @@ StackBox.prototype.write = function(_h, _d){
 	var fracV = (Math.max(height, depth) - FRAC_SHIFT_MID) * 2;
 	var elementsShift = Math.max(height, depth) - height;
 
-	var buf = '<i class="fb" style="height:' + EMDIST(fracV) + '">';
+	var buf = '<i class="fb' + (this.align ? ' a' + this.align : '') + '" style="height:' + EMDIST(fracV) + '">';
 	for(var i = 0; i < this.parts.length; i++){
 		var part = this.parts[i];
 		var partV = part.height + part.depth;
@@ -177,7 +186,11 @@ StackBox.prototype.write = function(_h, _d){
 	return buf;
 }
 
-var HBox = function(xs){
+var mangeHBoxSpaces = function(buf){
+	return buf.replace(/[ \u205f]*\u205f[ \u205f]*/g, '\u205f').replace(/^[\s\u2009\u205f]+/g, '').replace(/[\s\u2009\u205f]+$/g, '');
+}
+
+var HBox = function(xs, spaceQ){
 	if(!xs.length) xs = Array.prototype.slice.call(arguments, 0);
 	var h = 0
 	var d = 0
@@ -191,12 +204,16 @@ var HBox = function(xs){
 	this.height = h
 	this.depth = d
 	this.boxes = bx
+	this.spaceQ = spaceQ
 }
 HBox.prototype = new Box
 HBox.prototype.write = function(){
-	var buf = ''
-	for(var i = 0; i < this.boxes.length; i++) buf += this.boxes[i].write();
-	return buf;
+	var buf = '';
+	for(var i = 0; i < this.boxes.length; i++) {
+		buf += this.boxes[i].write();
+		if(this.spaceQ && i < this.boxes.length - 1) buf += ' '
+	}
+	return mangeHBoxSpaces(buf);
 }
 
 var BBox = function(left, content, right){
@@ -225,13 +242,13 @@ BBox.prototype.write = function(){
 	var SCALE_V = Math.ceil(8 * Math.max(1, contentUpperHeight / halfBracketHeight, contentLowerDepth / halfBracketHeight)) / 8;
 	if(SCALE_V <= 1.1) {
 		SCALE_V = 1;
-		return '<i class="bn l">' + this.left.write() + '</i>' + this.content.write() + '<i class="bn r">' + this.right.write() + '</i>';
+		return '<i class="bn l">' + this.left.write() + '</i>' + (this.content.write()).replace(/[\s|\u2009|\u205f]+((?:<\/i>)+)$/, '$1') + '<i class="bn r">' + this.right.write() + '</i>';
 	} else {
 		var SCALE_H = Math.min(2, 1 + 0.25 * (SCALE_V - 1));
 		var baselineAdjustment = - (halfwayHeight * SCALE_H - halfwayHeight) / SCALE_H;
 		var auxStyle = 'font-size:' + (SCALE_H * 100) + '%;vertical-align:' + EMDIST(baselineAdjustment);
 		return (this.left.c ? scale_span(1, SCALE_V / SCALE_H, this.left.write(), 'bb l', auxStyle) : '')
-		       + this.content.write() 
+		       + (this.content.write()).replace(/[\s|\u2009|\u205f]+((?:<\/i>)+)$/, '$1')
 		       + (this.right.c ? scale_span(1, SCALE_V / SCALE_H, this.right.write(), 'bb r', auxStyle) : '')
 	}
 }
@@ -285,8 +302,8 @@ SSBox.prototype.write = function(){
 }
 
 var SSStackBox = function(base, sup, sub){
-	this.sup = sup ? new ScaleBox(SS_SIZE, sup) : null
-	this.sub = sub ? new ScaleBox(SS_SIZE, sub) : null
+	this.sup = sup ? new ScaleBox(SS_SIZE, sup, SSSTACK_MARGIN_SUP) : null;
+	this.sub = sub ? new ScaleBox(SS_SIZE, sub, SSSTACK_MARGIN_SUB) : null;
 	this.base = base;
 	this.height = base.height + (sup ? (this.sup.height + this.sup.depth) : 0);
 	this.depth = base.depth + (sub ? (this.sub.height + this.sub.depth) : 0);
@@ -322,8 +339,8 @@ var BigOpBox = function(scale, content){
 }
 BigOpBox.prototype = new Box;
 BigOpBox.prototype.write = function(){
-	return '<i class="bo" style="font-size:' + (this.scale * 100) + '%;vertical-align:' +
-		EMDIST(- (this.halfwayHeight * this.scale - this.halfwayHeight) / (this.scale)) + '">' + this.content.write() + '</i>'
+	return '<i class="bo" style="font-size:' + (this.scale * 100) + '%;position:relative;top:' +
+		EMDIST((this.halfwayHeight * this.scale - this.halfwayHeight + BIGOP_SHIFT) / (this.scale)) + '">' + this.content.write() + '</i>'
 }
 
 var layoutSegment = function(parts){
@@ -347,8 +364,8 @@ var layoutSegment = function(parts){
 	}
 }
 
-var layout = function(box){
-	if(box instanceof HBox){
+var layout = function(box, config){
+	if(box instanceof HBox && !config.keepSpace){
 		var buf = '';
 		var segment = [];
 		for(var i = 0; i < box.boxes.length; i++){
@@ -364,7 +381,7 @@ var layout = function(box){
 			}
 		}
 		buf += layoutSegment(segment);
-		return buf;
+		return mangeHBoxSpaces(buf);
 	} else {
 		return layoutSegment([box])
 	}
@@ -378,6 +395,8 @@ var marco = {};
 	var SYMBOL = 3
 	var TEXT = 4
 	var TT = 5
+	var SPACE = 6
+	var _globalMarcos = marco
 	function walk(r, s, fMatch, fGap){
 		var l = r.lastIndex;
 		r.lastIndex = 0;
@@ -393,7 +412,7 @@ var marco = {};
 		r.lastIndex = l;
 		return s;
 	};
-	var lex = function(s){
+	var lex = function(s, config){
 		var q = [];
 		walk(/("(?:[^\\\"]|\\.)*")|(`(?:[^`]|``)*`)|([a-zA-Z0-9\.\u0080-\uffff]+)|([\[\]\(\)\{\}])|(,|[\/<>?:';|\\\-_+=~!@#$%^&*]+)/g, s, function(m, text, tt, id, b, sy){
 			if(text) q.push({type: TEXT, c: text.replace(/\\"/g, '"')})
@@ -402,12 +421,14 @@ var marco = {};
 			if(b)  q.push({type: BRACKET, c: b})
 			if(sy) q.push({type: SYMBOL, c: sy})
 			return ''
-		}, function(){});
+		}, function(space){
+		});
 		return q;
 	};
 
 
-	var parse = function(q){
+	var parse = function(q, config){
+		var marco = config.marcos || _globalMarcos;
 		var j = 0
 		var expr = function(){
 			var terms = [];
@@ -420,14 +441,14 @@ var marco = {};
 					for(var i = 1; i < themarco.length; i++){
 						args.push(term());
 					}
-					terms.push(themarco.apply(null, args))
+					terms.push(themarco.apply(marco, args))
 				} else {
 					terms.push(term());
 				}
 			}
 			if(terms.length === 0) return new CBox('');
 			if(terms.length === 1) return terms[0];
-			return new HBox(terms);
+			return new HBox(terms, config.keepSpace);
 		}
 		var term = function(){
 			var token = q[j];
@@ -474,8 +495,17 @@ var marco = {};
 		}
 		return expr();
 	};
-	eqn = function(s){
-		return '<span class="eqn">' + layout(parse(lex(s.trim()))) + '</span>'
+	eqn = function(s, config, customMarcos){
+		config = config || {};
+		if(customMarcos){
+			var _m = Object.create(marco);
+			for(var e in customMarcos){
+				if(typeof customMarcos[e] == 'string') _m[e] = function(x){return function(){return x}}(parse(lex(customMarcos[e], config), config))
+				else _m[e] = customMarcos[e]
+			};
+			config.marcos = _m;
+		}
+		return '<span class="eqn">' + layout(parse(lex(s.trim(), config), config), config) + '</span>'
 	}
 })();
 
@@ -504,6 +534,12 @@ marco.above = function(upper, lower){
 	if(lower instanceof StackBox) lowerParts = lower.parts
 	return new StackBox(upperParts.concat(lowerParts));
 }
+marco.aboveleft = function(upper, lower){
+	var upperParts = [upper], lowerParts = [lower]
+	if(upper instanceof StackBox) upperParts = upper.parts
+	if(lower instanceof StackBox) lowerParts = lower.parts
+	return new StackBox(upperParts.concat(lowerParts), 'left');
+}
 marco.squared = function(operand){
 	return new SSBox(operand, new CBox('2'));
 }
@@ -526,14 +562,14 @@ marco['_'] = function(base, sub){
 }
 marco['^^'] = function(base, sup){
 	if(base instanceof SSStackBox && ! base.sup){
-		return new SSStackBox(base.base, sup, base.sub)
+		return new SSStackBox(base.base, sup, base.sub.content)
 	} else {
 		return new SSStackBox(base, sup)
 	}
 }
 marco['__'] = function(base, sub){
 	if(base instanceof SSStackBox && ! base.sub){
-		return new SSStackBox(base.base, base.sup, sub)
+		return new SSStackBox(base.base, base.sup.content, sub)
 	} else {
 		return new SSStackBox(base, null, sub)
 	}
@@ -846,6 +882,8 @@ marco['Or'] = XBM(OPERATOR_SCALE, "\u22C1");
 marco['Cap'] = marco['Intersect'] = XBM(OPERATOR_SCALE, "\u22C2");
 marco['Cup'] = marco['Union'] = XBM(OPERATOR_SCALE, "\u22C3");
 marco['sdot'] = OBM("\u22C5");
+marco['lojoin'] = OBM('\u22c9');
+marco['rojoin'] = OBM('\u22ca');
 marco['lceil'] = OBM("\u2308");
 marco['rceil'] = OBM("\u2309");
 marco['lfloor'] = OBM("\u230A");
@@ -866,7 +904,7 @@ marco['+'] = OBM('+');
 marco['-'] = marco.minus;
 marco['<'] = marco.lt;
 marco['>'] = marco.gt;
-marco['~'] = SPBM(' ');
+marco['~'] = CBM('\u205f');
 marco['~~'] = marco.ensp;
 marco['~~~'] = marco.emsp;
 marco['+-'] = marco.plusmn;
@@ -902,10 +940,10 @@ marco.inf = OBM('inf')
 marco.lcbr = CBM('\u27E8')
 marco.rcbr = CBM('\u27e9')
 marco.ket  = function(content){
-	return new BBox('\u2009\u2223', content, '\u27e9')
+	return new BBox('\u2223', content, '\u27e9')
 }
 marco.bra  = function(content){
-	return new BBox('\u27e8', content, '\u2223\u2009')
+	return new BBox('\u27e8', content, '\u2223')
 }
 marco.braket = function(content){
 	return new BBox('\u27e8', content, '\u27e9')
@@ -945,13 +983,13 @@ marco.underline = function(content){
 
 exports.apply = function(){
 	this.usePackage('ove/html');
-	this.$inline = function(s){
-		return eqn(s);
+	this.$inline = function(s, config, customMarcos){
+		return eqn(s, config, customMarcos);
 	}
 	this.$ = this.$inline;
 	this.$display = function(s){
 		var lines = s.trim().split("\n");
-		return this.div('class="eqn-display"', this.div('class="eqn-display-i"', lines.map(eqn).join("<br>")))
+		return this.div('class="eqn-display"', this.div('class="eqn-display-i"', lines.map(function(line){return eqn(line)}).join("<br>")))
 	}
 	this.$ul = function(s){
 		var lines = s.trim().split("\n");
@@ -968,7 +1006,7 @@ exports.apply = function(){
 			s = alignment;
 			alignment = [];
 		} else {
-			alignment = alignment.split('|')
+			alignment = alignment.split(';')
 		}
 		var lines = s.trim().split("\n");
 		var buf = '';
