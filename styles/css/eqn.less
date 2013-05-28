@@ -68,7 +68,7 @@
 	     url('../font/Symbola_kh.otf') format('opentype');
 	unicode-range: U+21-2F, U+3A-40, U+5B-60, U+7B-7F, U+A0-BF, U+D7, U+F7, U+2000-FFFF, U+10000-FFFFF;
 }
-.eqn {
+.eqn_font {
 	font-family: "Math", "Verdandi Modern", "Linux Libertine", "Times New Roman";
 }
 // equations
@@ -178,6 +178,9 @@
 	.sp {
 		white-space: pre-wrap;
 	}
+	code {
+		color: #900;
+	}
 }
 
 div.eqn-display {
@@ -188,6 +191,26 @@ div.eqn-display {
 	}
 }
 table.eqn-align {
+	margin-left: auto;
+	margin-right: auto;
+	min-width: 0;
+	box-shadow: none;
+	border: none;
+	td {
+		padding:0 0.2em;
+	}
+}
+
+div.eqn-display {
+	.parag;
+	text-align: center;
+	> .eqn-display-i {
+		text-align: left;
+		display: inline-block;
+	}
+}
+table.eqn-align {
+	.parag;
 	margin-left: auto;
 	margin-right: auto;
 	min-width: 0;

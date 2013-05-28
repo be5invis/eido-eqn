@@ -170,10 +170,17 @@ var StackBox = function(parts, align){
 }
 StackBox.prototype = new Box;
 StackBox.prototype.write = function(_h, _d){
-	var height = (arguments.length >= 2 ? _h : this.height);
-	var depth = (arguments.length >= 2 ? _d : this.depth);
-	var fracV = (Math.max(height, depth) - FRAC_SHIFT_MID) * 2;
-	var elementsShift = Math.max(height, depth) - height;
+	if(arguments.length >= 2) {
+		var height = _h;
+		var depth =  _d;
+		var fracV = Math.max(height, depth) * 2 - FRAC_SHIFT_MID;
+		var elementsShift = Math.max(height, depth) - height;
+	} else {
+		var height = this.height;
+		var depth = this.depth;
+		var fracV = (Math.max(height, depth) - FRAC_SHIFT_MID) * 2;
+		var elementsShift = Math.max(height, depth) - height;
+	}
 
 	var buf = '<i class="fb' + (this.align ? ' a' + this.align : '') + '" style="height:' + EMDIST(fracV) + '">';
 	for(var i = 0; i < this.parts.length; i++){
@@ -388,6 +395,8 @@ var layout = function(box, config){
 };
 
 var eqn = null;
+var eqn_lex = null;
+var eqn_parse = null;
 var marco = {};
 (function () {
 	var ID = 1
@@ -412,7 +421,7 @@ var marco = {};
 		r.lastIndex = l;
 		return s;
 	};
-	var lex = function(s, config){
+	var lex = eqn_lex = function(s, config){
 		var q = [];
 		walk(/("(?:[^\\\"]|\\.)*")|(`(?:[^`]|``)*`)|([a-zA-Z0-9\.\u0080-\uffff]+)|([\[\]\(\)\{\}])|(,|[\/<>?:';|\\\-_+=~!@#$%^&*]+)/g, s, function(m, text, tt, id, b, sy){
 			if(text) q.push({type: TEXT, c: text.replace(/\\"/g, '"')})
@@ -427,21 +436,23 @@ var marco = {};
 	};
 
 
-	var parse = function(q, config){
-		var marco = config.marcos || _globalMarcos;
-		var j = 0
+	var parse = eqn_parse = function(q, config){
+		var marco = Object.create(config.marcos || _globalMarcos);
+		marco['#config'] = config;
+		var j = 0;
 		var expr = function(){
 			var terms = [];
 			while(q[j] &&!(q[j].c === ')' || q[j].c === ']' || q[j].c === '}')) {
-				if(marco[q[j].c] && marco[q[j].c] instanceof Function && marco[q[j].c].length){
+				if(marco[q[j].c] && marco[q[j].c] instanceof Function && (marco[q[j].c].arity || marco[q[j].c].length)){
 					var themarco = marco[q[j].c];
+					var arity = themarco.arity || themarco.length;
 					j++;
-					var args = [terms[terms.length - 1]];
+					var parameters = [terms[terms.length - 1]];
 					terms.length -= 1;
-					for(var i = 1; i < themarco.length; i++){
-						args.push(term());
+					for(var i = 1; i < arity; i++){
+						parameters.push(term());
 					}
-					terms.push(themarco.apply(marco, args))
+					terms.push(themarco.apply(marco, parameters))
 				} else {
 					terms.push(term());
 				}
@@ -474,11 +485,11 @@ var marco = {};
 				return r;
 			}
 			if(marco[token.c] && marco[token.c] instanceof Function){
-				if(marco[token.c].length){
-					throw "Wrong marco call!"
+				if(marco[token.c].arity || marco[token.c].length){
+					throw "Invalid marco: " + token.c
 				} else {
 					j++;
-					return marco[token.c]()
+					return marco[token.c].call(marco)
 				}
 			} else {
 				j++;
@@ -916,6 +927,8 @@ marco['<='] = marco.le;
 marco['\''] = marco.prime;
 marco.union = marco.cup
 marco.intersect = marco.cap
+marco['|-'] = OBM("\u22A2")
+marco['-|'] = OBM("\u22A3")
 
 marco[','] = function(){return new BCBox(',')};
 marco[';'] = function(){return new BCBox(';')};
@@ -927,15 +940,6 @@ marco[':'] = OBM(':');
 
 marco['...'] = OBM('…');
 marco['......'] = OBM('……');
-
-marco.sin = OBM('sin')
-marco.cos = OBM('cos')
-marco.tan = OBM('tan')
-marco.log = OBM('log')
-marco.ln  = OBM('ln')
-marco.lim = OBM('lim')
-marco.sup = OBM('sup')
-marco.inf = OBM('inf')
 
 marco.lcbr = CBM('\u27E8')
 marco.rcbr = CBM('\u27e9')
@@ -1001,6 +1005,41 @@ exports.apply = function(){
 		var t = this;
 		return this.ol('class="eqn-list"', lines.map(function(line){return t.li(eqn(line))}).join("\n"))
 	}
+	this.$defm = function(sPattern, sDefinition){
+		var pattern = sPattern.split(/\s+/);
+		var parameters = [];
+		if(pattern.length > 1) {
+			parameters.push(pattern[0])
+			for(var j = 2; j < pattern.length; j++){
+				parameters.push(pattern[j])
+			};
+			var fid = pattern[1]
+		} else {
+			var fid = pattern[0]
+		};
+		var tokens = eqn_lex(sDefinition.trim(), {});
+		if(parameters.length > 0){
+			marco[fid] = function(){
+				var a = arguments;
+				var marcos = Object.create(this);
+				for(var j = 0; j < parameters.length; j++){
+					marcos[parameters[j]] = function(i){
+						return function(){
+							return a[i]
+						}
+					}(j);
+				};
+				var __config = Object.create(this['#config'] || {});
+				__config.marcos = marcos;
+				return eqn_parse(tokens, __config);
+			};
+			marco[fid].arity = parameters.length;
+		} else {
+			marco[fid] = function(){
+				return eqn_parse(tokens, this['#config'] || {});
+			}
+		}
+	}
 	this.$align = function(alignment,s){
 		if(arguments.length < 2){
 			s = alignment;
@@ -1017,5 +1056,6 @@ exports.apply = function(){
 		};
 
 		return '<table class="eqn-align">' + buf + '</table>'
-	}
+	};
+	require('./eqn.ed').apply.call(this);
 }
