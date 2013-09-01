@@ -7,10 +7,10 @@ var SUB_SHIFT = 0.1
 var FRAC_PADDING = 0.1
 var POSITION_SHIFT = 0
 var OPERATOR_SCALE = 1.5
-var BIGOP_SHIFT = -0.25
+var BIGOP_SHIFT = -0.1
 var INTEGRATE_SCALE = 2
-var SSSTACK_MARGIN_SUP = 0.1
-var SSSTACK_MARGIN_SUB = 0.75
+var SSSTACK_MARGIN_SUP = -0.15
+var SSSTACK_MARGIN_SUB = 0.45
 
 var EMDIST = function(x){
 	return x.toFixed(4).replace(/\.?0+$/, '') + 'em'
@@ -92,7 +92,7 @@ BCBox.prototype = new CBox;
 BCBox.prototype.breakAfter  = true;
 BCBox.prototype.spaceAfter  = true;
 BCBox.prototype.write = function(){
-	return this.c + '\u205f'
+	return '<i class="op">' + this.c + '\u205f</i>'
 }
 var ScaleBox = function(scale, b, baselineShift){
 	this.content = b;
@@ -516,7 +516,7 @@ var marco = {};
 			};
 			config.marcos = _m;
 		}
-		return '<span class="eqn">' + layout(parse(lex(s.trim(), config), config), config) + '</span>'
+		return '<span class="eqn">' + layout(parse(lex(('' + s).trim(), config), config), config) + '</span>'
 	}
 })();
 
@@ -834,9 +834,9 @@ marco['uArr'] = OBM("\u21D1");
 marco['rArr'] = OBM("\u21D2");
 marco['dArr'] = OBM("\u21D3");
 marco['hArr'] = OBM("\u21D4");
-marco['forall'] = OBM("\u2200");
+marco['forall'] = CBM("\u2200");
 marco['part'] = CBM("\u2202");
-marco['exist'] = OBM("\u2203");
+marco['exist'] = CBM("\u2203");
 marco['empty'] = CBM("\u2205");
 marco['nabla'] = CBM("\u2207");
 marco['isin'] = OBM("\u2208");
