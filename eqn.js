@@ -9,8 +9,9 @@ var POSITION_SHIFT = 0
 var OPERATOR_SCALE = 1.5
 var BIGOP_SHIFT = -0.1
 var INTEGRATE_SCALE = 2
-var SSSTACK_MARGIN_SUP = -0.15
-var SSSTACK_MARGIN_SUB = 0.45
+var SSSTACK_MARGIN_SUP = 0
+var SSSTACK_MARGIN_SUB = 0.55
+var MATH_SPACE = ' '
 
 var EMDIST = function(x){
 	return x.toFixed(4).replace(/\.?0+$/, '') + 'em'
@@ -41,6 +42,15 @@ VarBox.prototype = new CBox;
 VarBox.prototype.write = function(){
 	return '<var>' + this.c + '</var>'
 }
+var NumberBox = function(c){
+	this.height = CHAR_ASC
+	this.depth = CHAR_DSC
+	this.c = c
+}
+NumberBox.prototype = new CBox;
+NumberBox.prototype.write = function(){
+	return '<var class="nm">' + this.c + '</var>'
+}
 var CodeBox = function(c){
 	this.height = CHAR_ASC
 	this.depth = CHAR_DSC
@@ -70,7 +80,7 @@ OpBox.prototype.breakAfter  = true;
 OpBox.prototype.spaceBefore = true;
 OpBox.prototype.spaceAfter  = true;
 OpBox.prototype.write = function(){
-	return '\u205f<i class="op">' + this.c + '</i>\u205f'
+	return MATH_SPACE + '<i class="op">' + this.c + '</i>' + MATH_SPACE
 }
 var SpBox = function(c){
 	this.height = CHAR_ASC
@@ -92,7 +102,7 @@ BCBox.prototype = new CBox;
 BCBox.prototype.breakAfter  = true;
 BCBox.prototype.spaceAfter  = true;
 BCBox.prototype.write = function(){
-	return '<i class="op">' + this.c + '\u205f</i>'
+	return '<i class="op">' + this.c + '</i>' + MATH_SPACE
 }
 var ScaleBox = function(scale, b, baselineShift){
 	this.content = b;
@@ -194,7 +204,9 @@ StackBox.prototype.write = function(_h, _d){
 }
 
 var mangeHBoxSpaces = function(buf){
-	return buf.replace(/[ \u205f]*\u205f[ \u205f]*/g, '\u205f').replace(/^[\s\u2009\u205f]+/g, '').replace(/[\s\u2009\u205f]+$/g, '');
+	return buf.replace(/[ \u205f\u2005]*[\u2005\u205f][ \u2005\u205f]*/g, '\u205f')
+	          .replace(/^[\s\u2009\u205f\u2005]+/g, '')
+	          .replace(/[\s\u2009\u205f\u2005]+$/g, '');
 }
 
 var HBox = function(xs, spaceQ){
@@ -249,13 +261,13 @@ BBox.prototype.write = function(){
 	var SCALE_V = Math.ceil(8 * Math.max(1, contentUpperHeight / halfBracketHeight, contentLowerDepth / halfBracketHeight)) / 8;
 	if(SCALE_V <= 1.1) {
 		SCALE_V = 1;
-		return '<i class="bn l">' + this.left.write() + '</i>' + (this.content.write()).replace(/[\s|\u2009|\u205f]+((?:<\/i>)+)$/, '$1') + '<i class="bn r">' + this.right.write() + '</i>';
+		return '<i class="bn l">' + this.left.write() + '</i>' + (this.content.write()).replace(/[\s\u2009\u205f]+((?:<\/i>)+)$/, '$1') + '<i class="bn r">' + this.right.write() + '</i>';
 	} else {
 		var SCALE_H = Math.min(2, 1 + 0.25 * (SCALE_V - 1));
 		var baselineAdjustment = - (halfwayHeight * SCALE_H - halfwayHeight) / SCALE_H;
 		var auxStyle = 'font-size:' + (SCALE_H * 100) + '%;vertical-align:' + EMDIST(baselineAdjustment);
 		return (this.left.c ? scale_span(1, SCALE_V / SCALE_H, this.left.write(), 'bb l', auxStyle) : '')
-		       + (this.content.write()).replace(/[\s|\u2009|\u205f]+((?:<\/i>)+)$/, '$1')
+		       + (this.content.write()).replace(/[\s\u2005\u2009\u205f]+((?:<\/i>)+)$/, '$1')
 		       + (this.right.c ? scale_span(1, SCALE_V / SCALE_H, this.right.write(), 'bb r', auxStyle) : '')
 	}
 }
@@ -361,13 +373,13 @@ var layoutSegment = function(parts){
 		if(d < parts[i].depth)  d = parts[i].depth
 	}
 	var shift = h - Math.max(h, d);
-	var spacesBefore = buf.match(/^[\s\u2009\u205f]*/)[0] || '';
-	var spacesAfter = buf.match(/[\s\u2009\u205f]*$/)[0] || '';
+	var spacesBefore = buf.match(/^[\s\u2009\u205f\u2005]*/)[0] || '';
+	var spacesAfter = buf.match(/[\s\u2009\u205f\u2005]*$/)[0] || '';
 	if(shift < 0.002 && shift > -0.002){
-		return spacesBefore + '<s style="height:' + EMDIST((h + d)) + '">' + buf.trim() + '</s>' + spacesAfter
+		return spacesBefore + '<u style="height:' + EMDIST((h + d)) + '">' + buf.trim() + '</u>' + spacesAfter
 	} else {
-		return spacesBefore + '<s style="height:' + EMDIST((h + d)) + ';vertical-align:' + EMDIST(shift) + '">'
-			+ '<i class="ei" style="top:' + EMDIST(shift) + '">' + buf.trim() + '</i></s>' + spacesAfter
+		return spacesBefore + '<u style="height:' + EMDIST((h + d)) + ';vertical-align:' + EMDIST(shift) + '">'
+			+ '<i class="ei" style="top:' + EMDIST(shift) + '">' + buf.trim() + '</i></u>' + spacesAfter
 	}
 }
 
@@ -495,6 +507,9 @@ var marco = {};
 				j++;
 				if(token.type == ID && /^[a-zA-Z]/.test(token.c)){
 					return new VarBox(token.c)
+				} else if(token.type === ID && /^[0-9]/.test(token.c)) {
+					// A number
+					return new NumberBox(token.c)
 				} else if(token.type === TEXT){
 					return new CBox(token.c.slice(1, -1))
 				} else if(token.type === TT){
@@ -506,6 +521,12 @@ var marco = {};
 		}
 		return expr();
 	};
+	var encodeEqnResultHtml = function(html) {
+		return '<script>(function(){var a=document.getElementsByTagName("script");a=a[a.length-1].parentNode;setTimeout(function(){a.innerHTML = ' + JSON.stringify('' + html) + '},1)}())</script>'
+	};
+	var encodeEqnSourceQuickPreview = function(source) {
+		return '<code class="preview">' + ('' + source).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</code>';
+	}
 	eqn = function(s, config, customMarcos){
 		config = config || {};
 		if(customMarcos){
@@ -516,7 +537,7 @@ var marco = {};
 			};
 			config.marcos = _m;
 		}
-		return '<span class="eqn">' + layout(parse(lex(('' + s).trim(), config), config), config) + '</span>'
+		return '<span class="eqn">' + encodeEqnSourceQuickPreview(s) + encodeEqnResultHtml(layout(parse(lex(('' + s).trim(), config), config), config)) + '</span>'
 	}
 })();
 
@@ -915,7 +936,7 @@ marco['+'] = OBM('+');
 marco['-'] = marco.minus;
 marco['<'] = marco.lt;
 marco['>'] = marco.gt;
-marco['~'] = CBM('\u205f');
+marco['~'] = CBM('\u2005');
 marco['~~'] = marco.ensp;
 marco['~~~'] = marco.emsp;
 marco['+-'] = marco.plusmn;

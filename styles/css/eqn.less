@@ -1,80 +1,31 @@
-@font-face {
-    font-family: 'Math';
-    font-weight: bold;
-    font-style: italic;
-    src: local("Verdandi Modern Bold Italic"),
-         url('../font/Verdandi-Modern-BoldItalic.woff') format('woff'),
-         url('../font/Verdandi-Modern-BoldItalic.ttf') format('truetype');
-}
-@font-face {
-    font-family: 'Math';
-    font-weight: normal;
-    font-style: italic;
-    src: local("Verdandi Modern Italic"),
-         url('../font/Verdandi-Modern-Italic.woff') format('woff'),
-         url('../font/Verdandi-Modern-Italic.ttf') format('truetype');
-}
-@font-face {
-    font-family: 'Math';
-    font-weight: bold;
-    font-style: normal;
-    src: local("Verdandi Modern Bold"),
-         url('../font/Verdandi-Modern-Bold.woff') format('woff'),
-         url('../font/Verdandi-Modern-Bold.ttf') format('truetype');
-}
-@font-face {
-    font-family: 'Math';
-    font-weight: normal;
-    font-style: normal;
-    src: local("Verdandi Modern Roman"), local("Verdandi Modern Regular"), local("Verdandi Modern"),
-         url('../font/Verdandi-Modern-Roman.woff') format('woff'),
-         url('../font/Verdandi-Modern-Roman.ttf') format('truetype');
-}
+// This file defines two fonts containing text and symbol for equations.
+// It is not given, do it yourself.
+@import url(./mathfont.css);
 
+.eqn_font() {
+	font-family: "Math-Text", "Math-Symbol", "Tinos", "Linux Libertine", "Times New Roman", serif;
 
-@font-face {
-	font-family: "Math";
-	font-weight: bold;
-	font-style: italic;
-	src: local("Symbola"), 
-	     url('../font/Symbola_kh.woff') format('woff'), 
-	     url('../font/Symbola_kh.otf') format('opentype');
-	unicode-range: U+21-2F, U+3A-40, U+5B-60, U+7B-7F, U+A0-BF, U+D7, U+F7, U+2000-FFFF, U+10000-FFFFF;
-}
-@font-face {
-	font-family: "Math";
-	font-weight: normal;
-    font-style: italic;
-	src: local("Symbola"), 
-	     url('../font/Symbola_kh.woff') format('woff'), 
-	     url('../font/Symbola_kh.otf') format('opentype');
-	unicode-range: U+21-2F, U+3A-40, U+5B-60, U+7B-7F, U+A0-BF, U+D7, U+F7, U+2000-FFFF, U+10000-FFFFF;
-}
-@font-face {
-	font-family: "Math";
-	font-weight: bold;
-	font-style: normal;
-	src: local("Symbola"), 
-	     url('../font/Symbola_kh.woff') format('woff'), 
-	     url('../font/Symbola_kh.otf') format('opentype');
-	unicode-range: U+21-2F, U+3A-40, U+5B-60, U+7B-7F, U+A0-BF, U+D7, U+F7, U+2000-FFFF, U+10000-FFFFF;
-}
-@font-face {
-	font-family: "Math";
-	font-weight: normal;
-	font-style: normal;
-	src: local("Symbola Regular"), local("Symbola"), 
-	     url('../font/Symbola_kh.woff') format('woff'), 
-	     url('../font/Symbola_kh.otf') format('opentype');
-	unicode-range: U+21-2F, U+3A-40, U+5B-60, U+7B-7F, U+A0-BF, U+D7, U+F7, U+2000-FFFF, U+10000-FFFFF;
-}
-.eqn_font {
-	font-family: "Math", "Verdandi Modern", "Linux Libertine", "Times New Roman";
+	// I turned off lnum numbers in Chrome due to a Chrome bug:
+	// when font-feature-settings is on, unicode-range of
+	// @font-face's will fail. It is fixed in Nov 20, 2013, but
+	// I have to wait for newer version of Chrome.
+	-webkit-font-feature-settings: normal;
+	text-rendering: optimizeSpeed;
 }
 // equations
 .eqn {
+	-webkit-font-feature-settings: normal;
+
+	// Chrome bug workaround.
+	var {
+		-webkit-font-feature-settings: "lnum";
+		&.nm {
+			font-style: normal;
+		}
+	}
+
 	i {font-style: normal; vertical-align: 0; line-height: 1.2}
-	> s {
+	> u {
 		text-decoration: none;
 		> .ei {
 			.e;
@@ -164,7 +115,7 @@
 					vertical-align: baseline;
 					text-align: left;
 					position: relative;
-					.op {
+					op, .op {
 						margin: 0;
 					}
 				}
@@ -175,7 +126,7 @@
 		.e;
 		vertical-align: middle;
 	}
-	.sp {
+	sp, .sp {
 		white-space: pre-wrap;
 	}
 	code {
