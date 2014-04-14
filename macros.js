@@ -159,7 +159,7 @@ macros.underline = function(content){
 	var comb = function(s){
 		return function(b){
 			if(b instanceof CBox){
-				b.c += '\u0302'
+				b.c += s
 				return b
 			} else {
 				return b
@@ -170,30 +170,30 @@ macros.underline = function(content){
 		return function(){return new BCBox(s)}
 	};
 
-	macros['Alpha'] = VBM("\u0391");
-	macros['Beta'] = VBM("\u0392");
-	macros['Gamma'] = VBM("\u0393");
-	macros['Delta'] = VBM("\u0394");
-	macros['Epsilon'] = VBM("\u0395");
-	macros['Zeta'] = VBM("\u0396");
-	macros['Eta'] = VBM("\u0397");
-	macros['Theta'] = VBM("\u0398");
-	macros['Iota'] = VBM("\u0399");
-	macros['Kappa'] = VBM("\u039A");
-	macros['Lambda'] = VBM("\u039B");
-	macros['Mu'] = VBM("\u039C");
-	macros['Nu'] = VBM("\u039D");
-	macros['Xi'] = VBM("\u039E");
-	macros['Omicron'] = VBM("\u039F");
-	macros['Pi'] = VBM("\u03A0");
-	macros['Rho'] = VBM("\u03A1");
-	macros['Sigma'] = VBM("\u03A3");
-	macros['Tau'] = VBM("\u03A4");
-	macros['Upsilon'] = VBM("\u03A5");
-	macros['Phi'] = VBM("\u03A6");
-	macros['Chi'] = VBM("\u03A7");
-	macros['Psi'] = VBM("\u03A8");
-	macros['Omega'] = VBM("\u03A9");
+	macros['Alpha'] = CBM("\u0391");
+	macros['Beta'] = CBM("\u0392");
+	macros['Gamma'] = CBM("\u0393");
+	macros['Delta'] = CBM("\u0394");
+	macros['Epsilon'] = CBM("\u0395");
+	macros['Zeta'] = CBM("\u0396");
+	macros['Eta'] = CBM("\u0397");
+	macros['Theta'] = CBM("\u0398");
+	macros['Iota'] = CBM("\u0399");
+	macros['Kappa'] = CBM("\u039A");
+	macros['Lambda'] = CBM("\u039B");
+	macros['Mu'] = CBM("\u039C");
+	macros['Nu'] = CBM("\u039D");
+	macros['Xi'] = CBM("\u039E");
+	macros['Omicron'] = CBM("\u039F");
+	macros['Pi'] = CBM("\u03A0");
+	macros['Rho'] = CBM("\u03A1");
+	macros['Sigma'] = CBM("\u03A3");
+	macros['Tau'] = CBM("\u03A4");
+	macros['Upsilon'] = CBM("\u03A5");
+	macros['Phi'] = CBM("\u03A6");
+	macros['Chi'] = CBM("\u03A7");
+	macros['Psi'] = CBM("\u03A8");
+	macros['Omega'] = CBM("\u03A9");
 	macros['alpha'] = VBM("\u03B1");
 	macros['beta'] = VBM("\u03B2");
 	macros['gamma'] = VBM("\u03B3");
@@ -223,9 +223,10 @@ macros.underline = function(content){
 	macros['thetasym'] = VBM("\u03D1");
 	macros['upsih'] = VBM("\u03D2");
 	macros['piv'] = VBM("\u03D6");
-	macros['~'] = SPBM('\u2005')
+	macros['~'] = SPBM('\u2004')
 	macros['~~'] = SPBM("\u2002");
-	macros['~~~~'] = SPBM("\u2003");
+	macros['~~~'] = SPBM("\u2003");
+	macros['quad'] = SPBM("\u2003");
 	macros['qquad'] = SPBM("\u2003\u2003");
 
 	// These are symbols imported from Unicode Math.
@@ -303,6 +304,7 @@ macros.underline = function(content){
 	macros.exclam = punct("\u0021");
 	macros.comma = punct("\u002C");
 	macros.mathcolon = sym("\u003A");
+	macros.colon = op("\u003A");
 	macros.semicolon = punct("\u003B");
 
 
@@ -313,8 +315,8 @@ macros.underline = function(content){
 	macros.bar = comb("\u0304");
 	macros.overbar = comb("\u0305");
 	macros.breve = comb("\u0306");
-	macros.dot = comb("\u0307");
-	macros.ddot = comb("\u0308");
+	macros.ovdot = comb("\u0307");
+	macros.ovddot = comb("\u0308");
 	macros.ovhook = comb("\u0309");
 	macros.ocirc = comb("\u030A");
 	macros.check = comb("\u030C");
@@ -582,7 +584,7 @@ macros.underline = function(content){
 	macros.mathdollar = sym("\u0024");
 	macros.percent = sym("\u0025");
 	macros.ampersand = sym("\u0026");
-	macros.period = sym("\u002E");
+	macros.period = punct("\u002E");
 	macros.mathslash = sym("\u002F");
 	macros.question = sym("\u003F");
 	macros.atsign = sym("\u0040");
@@ -2292,7 +2294,7 @@ macros.underline = function(content){
 	macros['%'] = macros.percent;
 	macros['.'] = macros.period;
 	macros[','] = macros.comma;
-	macros[':'] = macros.mathcolon;
+	macros[':'] = macros.colon;
 	macros[';'] = macros.semicolon;
 	macros['!'] = macros.exclam;
 	macros['/'] = macros.mathslash;

@@ -54,7 +54,7 @@ var SPACE = 6;
 	};
 	var lex = eqn_lex = function(s){
 		var q = [];
-		walk(/("(?:[^\\\"]|\\.)*")|(`(?:[^`]|``)*`)|([a-zA-Z0-9\.\u0080-\uffff]+)|([\[\]\(\)\{\}])|(,|[\/<>?:';|\\\-_+=~!@#$%^&*]+)/g, s, function(m, text, tt, id, b, sy){
+		walk(/("(?:[^\\\"]|\\.)*")|(`(?:[^`]|``)*`)|([a-zA-Z0-9\u0080-\uffff]+|\.\d+)|([\[\]\(\)\{\}])|([\.\,\;]|[\/<>?:'|\\\-_+=~!@#$%^&*]+)/g, s, function(m, text, tt, id, b, sy){
 			if(text) q.push({type: TEXT, c: text.replace(/\\"/g, '"')})
 			if(tt) q.push({type: TT, c: tt})
 			if(id) q.push({type: ID, c: id})
@@ -122,6 +122,7 @@ var SPACE = 6;
 						return macros[token.c].call(macros)
 					}
 				} else {
+					j++;
 					return macros[token.c]
 				}
 			} else {
@@ -135,6 +136,8 @@ var SPACE = 6;
 					return new CBox(token.c.slice(1, -1))
 				} else if(token.type === TT){
 					return new CodeBox(token.c.slice(1, -1).replace(/``/g, '`'))
+				} else if(token.type === SYMBOL) {
+					return new OpBox(token.c)
 				} else {
 					return new CBox(token.c)
 				}
@@ -143,10 +146,10 @@ var SPACE = 6;
 		return expr();
 	};
 	var encodeEqnResultHtml = function(html) {
-		return '<script>(function(){var a=document.getElementsByTagName("script");a=a[a.length-1].parentNode;setTimeout(function(){a.innerHTML = ' + JSON.stringify('' + html) + '},1)}())</script>'
+		return html
 	};
 	var encodeEqnSourceQuickPreview = function(source) {
-		return '<code class="preview">' + ('' + source).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</code>';
+		return '<code class="h preview">' + ('' + source).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</code>';
 	}
 	eqn = function(s, config, customMacros){
 		config = config || {};
@@ -169,8 +172,8 @@ require('./defms.js').defms(function(sPattern, sDefinition){
 			var m = Object.create(this);
 			for(var param in parameterPlacements){
 				m[param] = arguments[parameterPlacements[param]]
-			}
-			return eqn_compile(tokens, m, __config);
+			};
+			return eqn_compile(tokens, m);
 		};
 		macros[fid].arity = pattern.length - 1;
 	} else {

@@ -7,10 +7,10 @@ var SS_SIZE = 0.75
 var SUP_SHIFT = 0.9
 var SUB_SHIFT = 0.25
 var POSITION_SHIFT = 0
-var BIGOP_SHIFT = -0.1
-var SSSTACK_MARGIN_SUP = 0
-var SSSTACK_MARGIN_SUB = 0.55
-var MATH_SPACE = ' '
+var BIGOP_SHIFT = -0.3
+var SSSTACK_MARGIN_SUP = 0.1
+var SSSTACK_MARGIN_SUB = 0.75
+var MATH_SPACE = '\u2005'
 
 var EMDIST = function(x){
 	return x.toFixed(4).replace(/\.?0+$/, '') + 'em'
@@ -78,8 +78,8 @@ OpBox.prototype.breakBefore = true;
 OpBox.prototype.breakAfter  = true;
 OpBox.prototype.spaceBefore = true;
 OpBox.prototype.spaceAfter  = true;
-OpBox.prototype.write = function(){
-	return MATH_SPACE + '<i class="op">' + this.c + '</i>' + MATH_SPACE
+OpBox.prototype.write = function(adjLeft, adjRight){
+	return '<op>' + this.c + '</op>'
 }
 var SpBox = function(c){
 	this.height = CHAR_ASC
@@ -90,7 +90,7 @@ SpBox.prototype = new CBox;
 SpBox.prototype.breakBefore = true;
 SpBox.prototype.breakAfter  = true;
 SpBox.prototype.write = function(){
-	return '<i class="sp">' + this.c + '</i>'
+	return '<sp>' + this.c + '</sp>'
 }
 var BCBox = function(c){
 	this.height = CHAR_ASC
@@ -100,8 +100,8 @@ var BCBox = function(c){
 BCBox.prototype = new CBox;
 BCBox.prototype.breakAfter  = true;
 BCBox.prototype.spaceAfter  = true;
-BCBox.prototype.write = function(){
-	return '<i class="op">' + this.c + '</i>' + MATH_SPACE
+BCBox.prototype.write = function(adjLeft, adjRight){
+	return '<op>' + this.c + '</op>'
 }
 var ScaleBox = function(scale, b, baselineShift){
 	this.content = b;
@@ -113,9 +113,9 @@ var ScaleBox = function(scale, b, baselineShift){
 ScaleBox.prototype = new Box;
 ScaleBox.prototype.write = function(){
 	if(this.baselineShift){
-		return '<i style="font-size:' + EMDIST(this.scale) + ';position:relative;top:' + EMDIST(-this.baselineShift) + '">' + this.content.write() + '</i>'
+		return '<e style="font-size:' + EMDIST(this.scale) + ';position:relative;top:' + EMDIST(-this.baselineShift) + '">' + this.content.write() + '</e>'
 	} else {
-		return '<i style="font-size:' + EMDIST(this.scale) + '">' + this.content.write() + '</i>'
+		return '<e style="font-size:' + EMDIST(this.scale) + '">' + this.content.write() + '</e>'
 	}
 }
 
@@ -134,13 +134,13 @@ FracBox.prototype.write = function() {
 	var elementsShift = Math.max(this.height, this.depth) - this.height;
 	var numShift = this.num.height - Math.max(this.num.height, this.num.depth) + elementsShift;
 	var denShift = this.den.height - Math.max(this.den.height, this.den.depth) + elementsShift + FRAC_PADDING * 2;
-	return '<i class="fb" style="height:' + EMDIST(fracV) + '">'
-		+ '<i class="h">(</i>'
-		+ '<i class="num" style="height:' + EMDIST(numV) + ';top:' + EMDIST(numShift) + '">' + this.num.write() + '</i>'
-		+ '<i class="fdv" style="top:' + EMDIST(elementsShift + FRAC_PADDING) + '">/</i>'
-		+ '<i class="den" style="height:' + EMDIST(denV) + ';top:' + EMDIST(denShift) + '">' + this.den.write() + '</i>'
-		+ '<i class="h">)</i>'
-		+ '</i>'
+	return '<frac style="height:' + EMDIST(fracV) + '">'
+		+ '<hd>(</hd>'
+		+ '<num style="height:' + EMDIST(numV) + ';top:' + EMDIST(numShift) + '">' + this.num.write() + '</num>'
+		+ '<fdv style="top:' + EMDIST(elementsShift + FRAC_PADDING) + '">/</fdv>'
+		+ '<den style="height:' + EMDIST(denV) + ';top:' + EMDIST(denShift) + '">' + this.den.write() + '</den>'
+		+ '<hd>)</hd>'
+		+ '</frac>'
 }
 
 var Stack2Box = function(num, den){
@@ -158,10 +158,10 @@ Stack2Box.prototype.write = function() {
 	var elementsShift = Math.max(this.height, this.depth) - this.height;
 	var numShift = this.num.height - Math.max(this.num.height, this.num.depth) + elementsShift;
 	var denShift = this.den.height - Math.max(this.den.height, this.den.depth) + elementsShift + FRAC_PADDING * 2;
-	return '<i class="fb" style="height:' + EMDIST(fracV) + '">'
-		+ '<i class="num" style="height:' + EMDIST(numV) + ';top:' + EMDIST(numShift) + '">' + this.num.write() + '</i>'
-		+ '<i class="den" style="height:' + EMDIST(denV) + ';top:' + EMDIST(denShift) + '">' + this.den.write() + '</i>'
-		+ '</i>'
+	return '<stack style="height:' + EMDIST(fracV) + '">'
+		+ '<num style="height:' + EMDIST(numV) + ';top:' + EMDIST(numShift) + '">' + this.num.write() + '</num>'
+		+ '<den style="height:' + EMDIST(denV) + ';top:' + EMDIST(denShift) + '">' + this.den.write() + '</den>'
+		+ '</stack>'
 }
 
 var StackBox = function(parts, align){
@@ -191,14 +191,14 @@ StackBox.prototype.write = function(_h, _d){
 		var elementsShift = Math.max(height, depth) - height;
 	}
 
-	var buf = '<i class="fb' + (this.align ? ' a' + this.align : '') + '" style="height:' + EMDIST(fracV) + '">';
+	var buf = '<stack class="' + (this.align ? 'a' + this.align : '') + '" style="height:' + EMDIST(fracV) + '">';
 	for(var i = 0; i < this.parts.length; i++){
 		var part = this.parts[i];
 		var partV = part.height + part.depth;
 		var partShift = part.height - Math.max(part.height, part.depth) + elementsShift;
-		buf += '<i class="num" style="height:' + EMDIST(partV) + ';top:' + EMDIST(partShift) + '">' + part.write() + '</i>'
+		buf += '<num style="height:' + EMDIST(partV) + ';top:' + EMDIST(partShift) + '">' + part.write() + '</num>'
 	};
-	buf += '</i>';
+	buf += '</stack>';
 	return buf;
 }
 
@@ -206,6 +206,18 @@ var mangeHBoxSpaces = function(buf){
 	return buf.replace(/[ \u205f\u2005]*[\u2005\u205f][ \u2005\u205f]*/g, '\u205f')
 	          .replace(/^[\s\u2009\u205f\u2005]+/g, '')
 	          .replace(/[\s\u2009\u205f\u2005]+$/g, '');
+}
+
+function HBoxJoin(parts, f){
+	var buf = '';
+	for(var i = 0; i < parts.length; i++) {
+		buf += (i > 0 && (parts[i].spaceBefore || parts[i - 1].spaceAfter) ? MATH_SPACE : '') 
+			+ f(parts[i]);
+	}
+	return buf;
+}
+function STD_WRITE(box){
+	return box.write();
 }
 
 var HBox = function(xs, spaceQ){
@@ -223,15 +235,29 @@ var HBox = function(xs, spaceQ){
 	this.depth = d
 	this.boxes = bx
 	this.spaceQ = spaceQ
+	this.spaceBefore = this.boxes[0].spaceBefore;
+	this.spaceAfter = this.boxes[this.boxes.length - 1].spaceAfter;
 }
 HBox.prototype = new Box
-HBox.prototype.write = function(){
-	var buf = '';
-	for(var i = 0; i < this.boxes.length; i++) {
-		buf += this.boxes[i].write();
-		if(this.spaceQ && i < this.boxes.length - 1) buf += ' '
+HBox.prototype.write = function(adjLeft, adjRight){
+	return HBoxJoin(this.boxes, STD_WRITE)
+}
+
+var SegmentBox = function(xs){
+	HBox.call(this, xs);
+}
+SegmentBox.prototype = Object.create(HBox.prototype);
+SegmentBox.prototype.write = function(adjLeft, adjRight){
+	var buf = HBoxJoin(this.boxes, STD_WRITE);
+	var h = this.height
+	var d = this.depth
+	var shift = h - Math.max(h, d);
+	if(shift < 0.002 && shift > -0.002){
+		return '<seg style="height:' + EMDIST(h + d) + '">' + buf + '</seg>'
+	} else {
+		return '<seg style="height:' + EMDIST(h + d) + ';vertical-align:' + EMDIST(shift) + '">'
+			+ '<ei style="top:' + EMDIST(shift) + '">' + buf + '</ei></seg>'
 	}
-	return mangeHBoxSpaces(buf);
 }
 
 var BBox = function(left, content, right){
@@ -243,12 +269,12 @@ var BBox = function(left, content, right){
 }
 
 var scale_span = function(h, v, t, k, aux){
-	return '<i class="' + (k || 'bb') + '" style="transform:scale('+ h + ',' + v + ');'
+	return '<e class="' + (k || 'bb') + '" style="transform:scale('+ h + ',' + v + ');'
 			+ '-webkit-transform:scale('+ h + ',' + v + ');'
 			+ '-moz-transform:scale('+ h + ',' + v + ');'
 			+ '-ms-transform:scale('+ h + ',' + v + ');'
 			+ '-o-transform:scale('+ h + ',' + v + ');'
-			+ (aux || '') + '">' + t + "</i>"
+			+ (aux || '') + '">' + t + "</e>"
 }
 BBox.prototype = new Box;
 BBox.prototype.write = function(){
@@ -260,7 +286,7 @@ BBox.prototype.write = function(){
 	var SCALE_V = Math.ceil(8 * Math.max(1, contentUpperHeight / halfBracketHeight, contentLowerDepth / halfBracketHeight)) / 8;
 	if(SCALE_V <= 1.1) {
 		SCALE_V = 1;
-		return '<i class="bn l">' + this.left.write() + '</i>' + (this.content.write()).replace(/[\s\u2009\u205f]+((?:<\/i>)+)$/, '$1') + '<i class="bn r">' + this.right.write() + '</i>';
+		return '<e class="bn l">' + this.left.write() + '</e>' + (this.content.write()).replace(/[\s\u2009\u205f]+((?:<\/i>)+)$/, '$1') + '<e class="bn r">' + this.right.write() + '</e>';
 	} else {
 		var SCALE_H = Math.min(2, 1 + 0.25 * (SCALE_V - 1));
 		var baselineAdjustment = - (halfwayHeight * SCALE_H - halfwayHeight) / SCALE_H;
@@ -278,7 +304,7 @@ var SqrtBox = function(content){
 }
 SqrtBox.prototype = new Box;
 SqrtBox.prototype.write = function(){
-	return '<i class="sqrt"><i class="i" style="padding: ' + EMDIST(FRAC_PADDING) + ' 0">' + this.content.write() + '</i></i>'
+	return '<sqrt><sk style="padding: ' + EMDIST(FRAC_PADDING) + ' 0">' + this.content.write() + '</sk></sqrt>'
 }
 
 var DecoBox = function(content, deco){
@@ -289,7 +315,7 @@ var DecoBox = function(content, deco){
 }
 DecoBox.prototype = new Box;
 DecoBox.prototype.write = function(){
-	return '<i style="text-decoration:' + this.deco + '">' + this.content.write() + '</i>'
+	return '<e style="text-decoration:' + this.deco + '">' + this.content.write() + '</e>'
 }
 
 var SSBox = function(base, sup, sub){
@@ -298,9 +324,11 @@ var SSBox = function(base, sup, sub){
 	this.base = base;
 	this.height = base.height;
 	this.depth = base.depth;
+	this.spaceBefore = base.spaceBefore;
+	this.breakBefore = base.breakBefore;
 }
 SSBox.prototype = new Box;
-SSBox.prototype.write = function(){
+SSBox.prototype.write = function(adjLeft, adjRight){
 	var sup = this.sup || new CBox('&nbsp;');
 	var sub = this.sub || new CBox('&nbsp;');
 	var h = this.height / SS_SIZE;
@@ -310,13 +338,13 @@ SSBox.prototype.write = function(){
 	var baseShift = this.base.yShift / SS_SIZE || 0
 	var supShift = - sup.height - sup.depth + SUP_SHIFT + baseShift;
 	var subShift = - sup.height - sup.depth - sub.height - SUB_SHIFT + baseShift;
-	return	'<i class="sg" style="height:' + EMDIST((this.height + this.depth)) + '">'
-			+ this.base.write()
-			+ '<i class="ss" style="font-size:' + (SS_SIZE*100) + '%">'
-			+ '<i class="ssi" style="height:' + EMDIST((h+d)) + ';top:' + EMDIST((stackShift)) + '">'
+	return	'<sg style="height:' + EMDIST((this.height + this.depth)) + '">'
+			+ this.base.write(adjLeft, false)
+			+ '<ss style="font-size:' + (SS_SIZE*100) + '%">'
+			+ '<ssi style="height:' + EMDIST(h + d) + ';top:' + EMDIST((stackShift)) + '">'
 			+ '<sup style="height:' + EMDIST((sup.height + sup.depth)) + ';top:' + EMDIST(supShift) + '">' + sup.write() + '</sup>'
 			+ '<sub style="height:' + EMDIST((0)) + ';top:100%;margin-top:' + EMDIST((subShift)) + '">' + sub.write() + '</sub>'
-			+ '</i></i></i>'
+			+ '</ssi></ss></sg>'
 }
 
 var SSStackBox = function(base, sup, sub){
@@ -339,7 +367,7 @@ var FSBox = function(scale, content){
 }
 FSBox.prototype = new Box;
 FSBox.prototype.write = function(){
-	return '<i class="sc" style="font-size:' + (this.scale * 100) + '%">' + this.content.write() + '</i>'
+	return '<sc style="font-size:' + (this.scale * 100) + '%">' + this.content.write() + '</sc>'
 }
 
 var BigOpBox = function(scale, content){
@@ -357,51 +385,31 @@ var BigOpBox = function(scale, content){
 }
 BigOpBox.prototype = new Box;
 BigOpBox.prototype.write = function(){
-	return '<i class="bo" style="font-size:' + (this.scale * 100) + '%;position:relative;top:' +
-		EMDIST((this.halfwayHeight * this.scale - this.halfwayHeight + BIGOP_SHIFT) / (this.scale)) + '">' + this.content.write() + '</i>'
-}
-
-var layoutSegment = function(parts){
-	if(!parts.length) return '';
-	var h = 0
-	var d = 0
-	var buf = ''
-	for(var i = 0; i < parts.length; i++){
-		buf += parts[i].write();
-		if(h < parts[i].height) h = parts[i].height
-		if(d < parts[i].depth)  d = parts[i].depth
-	}
-	var shift = h - Math.max(h, d);
-	var spacesBefore = buf.match(/^[\s\u2009\u205f\u2005]*/)[0] || '';
-	var spacesAfter = buf.match(/[\s\u2009\u205f\u2005]*$/)[0] || '';
-	if(shift < 0.002 && shift > -0.002){
-		return spacesBefore + '<u style="height:' + EMDIST((h + d)) + '">' + buf.trim() + '</u>' + spacesAfter
-	} else {
-		return spacesBefore + '<u style="height:' + EMDIST((h + d)) + ';vertical-align:' + EMDIST(shift) + '">'
-			+ '<i class="ei" style="top:' + EMDIST(shift) + '">' + buf.trim() + '</i></u>' + spacesAfter
-	}
+	return '<bo style="font-size:' + (this.scale * 100) + '%;position:relative;top:' +
+		EMDIST((this.halfwayHeight * this.scale - this.halfwayHeight + BIGOP_SHIFT) / (this.scale)) + '">' + this.content.write() + '</bo>'
 }
 
 var layout = function(box, config){
 	if(box instanceof HBox && !config.keepSpace){
-		var buf = '';
+		var buf = [];
 		var segment = [];
 		for(var i = 0; i < box.boxes.length; i++){
 			var current = box.boxes[i];
 			if(current.breakBefore){
-				buf += layoutSegment(segment)
-				segment = [];
+				if(segment.length) buf.push(new SegmentBox(segment)); 
+				segment = []
 			}
 			segment.push(current)
 			if(current.breakAfter){
-				buf += layoutSegment(segment)
-				segment = [];
+				if(segment.length) buf.push(new SegmentBox(segment)); 
+				segment = []
 			}
 		}
-		buf += layoutSegment(segment);
-		return mangeHBoxSpaces(buf);
+		if(segment.length) buf.push(new SegmentBox(segment)); 
+		segment = [];
+		return HBoxJoin(buf, STD_WRITE);
 	} else {
-		return layoutSegment([box])
+		return (new SegmentBox([box])).write()
 	}
 };
 
@@ -429,5 +437,7 @@ exports.SSStackBox = SSStackBox;
 exports.FSBox = FSBox;
 exports.BigOpBox = BigOpBox;
 
-exports.layoutSegment = layoutSegment;
+exports.layoutSegment = function(boxes){
+	return (new SegmentBox(boxes)).write()
+};
 exports.layout = layout;

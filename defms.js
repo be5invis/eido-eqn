@@ -1,5 +1,5 @@
 exports.defms = function(defm){
-	defm('upper choose lower', '(upper over lower)')
+	defm('upper choose lower', '(upper above lower)');
 	defm("sin", '"sin" rm');
 	defm("cos", '"cos" rm');
 	defm("tan", '"tan" rm');
@@ -15,4 +15,7 @@ exports.defms = function(defm){
 	defm("inf", '"inf" rm');
 	defm("erf", '"erf" rm');
 	defm("erfc", '"erfc" rm');
+	defm("x '", 'x ^ prime');
+	defm("x bra", 'langle left x right |')
+	defm("x ket", '| left x right rangle')
 }
