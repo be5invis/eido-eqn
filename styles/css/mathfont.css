@@ -1,0 +1,63 @@
+@font-face {
+    font-family: 'Math-Text';
+    font-weight: normal;
+    font-style: italic;
+    src: url('../font/Verdandi-Modern-Italic.woff') format('woff'),
+         url('../font/Verdandi-Modern-Italic.ttf') format('opentype');
+    unicode-range: U+0041-005A, U+0061-007A, U+00C0-00D6, U+00D8-00F6, U+00F8-1FFF;
+}
+@font-face {
+    font-family: 'Math-Text';
+    font-weight: bold;
+    font-style: normal;
+    src: url('../font/Verdandi-Modern-Bold.woff') format('woff'),
+         url('../font/Verdandi-Modern-Bold.ttf') format('opentype');
+    unicode-range: U+0030-0039, U+0041-005A, U+0061-007A, U+00C0-00D6, U+00D8-00F6, U+00F8-1FFF;
+
+}
+@font-face {
+    font-family: 'Math-Text';
+    font-weight: bold;
+    font-style: italic;
+    src: url('../font/Verdandi-Modern-BoldItalic.woff') format('woff'),
+         url('../font/Verdandi-Modern-BoldItalic.ttf') format('opentype');
+    unicode-range: U+0030-0039, U+0041-005A, U+0061-007A, U+00C0-00D6, U+00D8-00F6, U+00F8-1FFF;
+}
+@font-face {
+    font-family: 'Math-Text';
+    font-weight: normal;
+    font-style: normal;
+    src: url('../font/Verdandi-Modern.woff') format('woff'),
+         url('../font/Verdandi-Modern.ttf') format('opentype');
+    unicode-range: U+0030-0039, U+0041-005A, U+0061-007A, U+00C0-00D6, U+00D8-00F6, U+00F8-1FFF;
+}
+
+
+@font-face {
+	font-family: "Math-Symbol";
+	font-weight: bold;
+	font-style: italic;
+	src: url('../font/symbols.woff') format('woff'), 
+	     url('../font/symbols.ttf') format('opentype');
+}
+@font-face {
+	font-family: "Math-Symbol";
+	font-weight: normal;
+    font-style: italic;
+	src: url('../font/symbols.woff') format('woff'), 
+	     url('../font/symbols.ttf') format('opentype');
+}
+@font-face {
+	font-family: "Math-Symbol";
+	font-weight: bold;
+	font-style: normal;
+	src: url('../font/symbols.woff') format('woff'), 
+	     url('../font/symbols.ttf') format('opentype');
+}
+@font-face {
+	font-family: "Math-Symbol";
+	font-weight: normal;
+	font-style: normal;
+	src: url('../font/symbols.woff') format('woff'), 
+	     url('../font/symbols.ttf') format('opentype');
+}
