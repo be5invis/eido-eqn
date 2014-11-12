@@ -214,7 +214,7 @@ exports.apply = function(scope, exports, runtime){
 		var buf = '';
 		for(var i = 0; i < lines.length; i++){
 			var line = lines[i];
-			var cells = line.split("//");
+			var cells = line.split("&&");
 			buf += '<tr>' + cells.map(function(cell, j){return '<td' + (alignment[j] ? ' style="text-align:' + alignment[j] + '"' : '') + '>' + eqn(cell) + '</td>'}).join('') + '</tr>'
 		};
 		return scope.tags.table('class="eqn-align"', buf);

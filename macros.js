@@ -32,8 +32,8 @@ var CBM = function(s){
 var OBM = function(s){
 	return function(){return new OpBox(s)}
 }
-var XBM = function(s, scale){
-	return function(){return new BigOpBox(scale || OPERATOR_SCALE, new CBox(s))}
+var XBM = function(s, scale, ascender, descender){
+	return function(){return new BigOpBox( new CBox(s), scale || OPERATOR_SCALE, ascender, descender)}
 }
 var VBM = function(s){
 	return function(){return new VarBox(s)}

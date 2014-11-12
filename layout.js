@@ -1,20 +1,37 @@
-var LINE_HEIGHT = 1.2
-var CHAR_ASC = 0.9
-var CHAR_DSC = LINE_HEIGHT - CHAR_ASC
+var LINE_HEIGHT = 1.5;
+var CHAR_ASC = 0.9;
+var CHAR_DESC = LINE_HEIGHT - CHAR_ASC;
+var STACK_MIDDLE = 0.15;
+var FRAC_MIDDLE = 0.1;
+var OPERATOR_ASC = 0.8
+var OPERATOR_DESC = LINE_HEIGHT - OPERATOR_ASC
 var FRAC_SHIFT_MID = 0.6
+var STACK_SHIFT_MID = 0.6
 var FRAC_PADDING = 0.1
-var SS_SIZE = 0.75
-var SUP_SHIFT = 0.9
-var SUB_SHIFT = 0.25
+var SS_SIZE = 0.7
+var SUP_SHIFT = 1.3
+var SUB_SHIFT = 0.5
 var POSITION_SHIFT = 0
-var BIGOP_SHIFT = -0.3
-var SSSTACK_MARGIN_SUP = 0.1
-var SSSTACK_MARGIN_SUB = 0.75
-var MATH_SPACE = '\u2005'
+var BIGOP_SHIFT = -0.15
+var SSSTACK_MARGIN_SUP = 0.05
+var SSSTACK_MARGIN_SUB = -1.1
+var BRACKET_SHIFT = 0
 
-var EMDIST = function(x){
-	return x.toFixed(4).replace(/\.?0+$/, '') + 'em'
+function em(x){	return x.toFixed(2).replace(/\.?0+$/, '') + 'em' }
+function arr1(box, rise, height, depth){
+	return arrx([box], [rise], height, depth)
 }
+function arrx(boxes, rises, height, depth, cl){
+	var buf = '<r style="height:' + em(height + depth) + ';vertical-align:' + em(height - CHAR_ASC) + '"' + (cl ? ' class="' + cl + '"' : '') + '><eb>{</eb>';
+	for(var j = 0; j < boxes.length; j++) if(boxes[j]) {
+		buf += '<ri style="top:' + em(height - boxes[j].height - rises[j]) + '">' + boxes[j].write() + '</ri>'
+	}
+	buf += '<eb>}</eb></r>'
+	return buf;
+}
+var EMDIST = em;
+
+var MATH_SPACE = '\u2005'
 
 var Box = function(){
 	this.height = 0;
@@ -24,7 +41,7 @@ Box.prototype.write = function(){return ''}
 
 var CBox = function(c){
 	this.height = CHAR_ASC
-	this.depth = CHAR_DSC
+	this.depth = CHAR_DESC
 	this.c = c
 }
 CBox.prototype = new Box;
@@ -34,7 +51,7 @@ CBox.prototype.write = function(){
 
 var VarBox = function(c){
 	this.height = CHAR_ASC
-	this.depth = CHAR_DSC
+	this.depth = CHAR_DESC
 	this.c = c
 }
 VarBox.prototype = new CBox;
@@ -43,7 +60,7 @@ VarBox.prototype.write = function(){
 }
 var NumberBox = function(c){
 	this.height = CHAR_ASC
-	this.depth = CHAR_DSC
+	this.depth = CHAR_DESC
 	this.c = c
 }
 NumberBox.prototype = new CBox;
@@ -52,7 +69,7 @@ NumberBox.prototype.write = function(){
 }
 var CodeBox = function(c){
 	this.height = CHAR_ASC
-	this.depth = CHAR_DSC
+	this.depth = CHAR_DESC
 	this.c = c
 }
 CodeBox.prototype = new CBox;
@@ -61,7 +78,7 @@ CodeBox.prototype.write = function(){
 }
 var BfBox = function(c){
 	this.height = CHAR_ASC
-	this.depth = CHAR_DSC
+	this.depth = CHAR_DESC
 	this.c = c
 }
 BfBox.prototype = new CBox;
@@ -70,7 +87,7 @@ BfBox.prototype.write = function(){
 }
 var OpBox = function(c){
 	this.height = CHAR_ASC
-	this.depth = CHAR_DSC
+	this.depth = CHAR_DESC
 	this.c = c
 }
 OpBox.prototype = new CBox;
@@ -83,7 +100,7 @@ OpBox.prototype.write = function(adjLeft, adjRight){
 }
 var SpBox = function(c){
 	this.height = CHAR_ASC
-	this.depth = CHAR_DSC
+	this.depth = CHAR_DESC
 	this.c = c
 }
 SpBox.prototype = new CBox;
@@ -94,7 +111,7 @@ SpBox.prototype.write = function(){
 }
 var BCBox = function(c){
 	this.height = CHAR_ASC
-	this.depth = CHAR_DSC
+	this.depth = CHAR_DESC
 	this.c = c
 }
 BCBox.prototype = new CBox;
@@ -119,87 +136,61 @@ ScaleBox.prototype.write = function(){
 	}
 }
 
-var FracBox = function(num, den){
-	this.num = num
-	this.den = den
-	this.height = num.height + num.depth + FRAC_PADDING + FRAC_SHIFT_MID
-	this.depth = den.height + den.depth + FRAC_PADDING - FRAC_SHIFT_MID
+function FracLineBox(){
+	this.height = 0;
+	this.depth = 0;
 }
-FracBox.prototype = new Box
-FracBox.prototype.write = function() {
-	// Magic! do not touch
-	var fracV = (Math.max(this.height, this.depth) - FRAC_SHIFT_MID) * 2;
-	var numV = this.num.height + this.num.depth;
-	var denV = this.den.height + this.den.depth;
-	var elementsShift = Math.max(this.height, this.depth) - this.height;
-	var numShift = this.num.height - Math.max(this.num.height, this.num.depth) + elementsShift;
-	var denShift = this.den.height - Math.max(this.den.height, this.den.depth) + elementsShift + FRAC_PADDING * 2;
-	return '<frac style="height:' + EMDIST(fracV) + '">'
-		+ '<hd>(</hd>'
-		+ '<num style="height:' + EMDIST(numV) + ';top:' + EMDIST(numShift) + '">' + this.num.write() + '</num>'
-		+ '<fdv style="top:' + EMDIST(elementsShift + FRAC_PADDING) + '">/</fdv>'
-		+ '<den style="height:' + EMDIST(denV) + ';top:' + EMDIST(denShift) + '">' + this.den.write() + '</den>'
-		+ '<hd>)</hd>'
-		+ '</frac>'
+FracLineBox.prototype = new Box;
+FracLineBox.prototype.write = function(){
+	return '<fl>/</fl>'
+}
+function FracBox(num, den){
+	this.num = num;
+	this.den = den;
+	this.height = this.num.height + this.num.depth + FRAC_MIDDLE;
+	this.depth = this.den.height + this.den.depth - FRAC_MIDDLE;
+}
+FracBox.prototype = new Box;
+FracBox.prototype.write = function(){
+	return arrx(
+		[this.num, new FracLineBox(), this.den], 
+		[this.height - this.num.height, this.height - this.num.height - this.num.depth, this.height - this.num.height - this.num.depth - this.den.height], 
+		this.height, this.depth, 'frac')
 }
 
-var Stack2Box = function(num, den){
-	this.num = num
-	this.den = den
-	this.height = num.height + num.depth + FRAC_PADDING + FRAC_SHIFT_MID
-	this.depth = den.height + den.depth + FRAC_PADDING - FRAC_SHIFT_MID
+function Stack2Box(num, den){
+	this.num = num;
+	this.den = den;
+	this.height = this.num.height + this.num.depth + FRAC_MIDDLE;
+	this.depth = this.den.height + this.den.depth - FRAC_MIDDLE;
 }
 Stack2Box.prototype = new Box;
-Stack2Box.prototype.write = function() {
-	// Magic! do not touch
-	var fracV = (Math.max(this.height, this.depth) - FRAC_SHIFT_MID) * 2;
-	var numV = this.num.height + this.num.depth;
-	var denV = this.den.height + this.den.depth;
-	var elementsShift = Math.max(this.height, this.depth) - this.height;
-	var numShift = this.num.height - Math.max(this.num.height, this.num.depth) + elementsShift;
-	var denShift = this.den.height - Math.max(this.den.height, this.den.depth) + elementsShift + FRAC_PADDING * 2;
-	return '<stack style="height:' + EMDIST(fracV) + '">'
-		+ '<num style="height:' + EMDIST(numV) + ';top:' + EMDIST(numShift) + '">' + this.num.write() + '</num>'
-		+ '<den style="height:' + EMDIST(denV) + ';top:' + EMDIST(denShift) + '">' + this.den.write() + '</den>'
-		+ '</stack>'
+Stack2Box.prototype.write = function(){
+	return arrx(
+		[this.num, this.den], 
+		[this.height - this.num.height, this.height - this.num.height - this.num.depth - this.den.height], 
+		this.height, this.depth, 'frac')
 }
 
-var StackBox = function(parts, align){
-	this.parts = [];
+function StackBox(boxes){
+	boxes = boxes.filter(function(x){ return !!x })
 	var v = 0;
-	for(var i = 0; i < parts.length; i++){
-		if(parts[i]){
-			this.parts.push(parts[i]);
-			v += parts[i].height + parts[i].depth
-		}
+	this.parts = boxes;
+	for(var j = 0; j < boxes.length; j++){
+		v += boxes[j].height + boxes[j].depth
 	}
-	this.height = v / 2 + FRAC_SHIFT_MID;
-	this.depth = v / 2 - FRAC_SHIFT_MID;
-	this.align = align;
+	this.height = v / 2 + STACK_MIDDLE
+	this.depth = v / 2 - STACK_MIDDLE
 }
 StackBox.prototype = new Box;
-StackBox.prototype.write = function(_h, _d){
-	if(arguments.length >= 2) {
-		var height = _h;
-		var depth =  _d;
-		var fracV = Math.max(height, depth) * 2 - FRAC_SHIFT_MID;
-		var elementsShift = Math.max(height, depth) - height;
-	} else {
-		var height = this.height;
-		var depth = this.depth;
-		var fracV = (Math.max(height, depth) - FRAC_SHIFT_MID) * 2;
-		var elementsShift = Math.max(height, depth) - height;
-	}
-
-	var buf = '<stack class="' + (this.align ? 'a' + this.align : '') + '" style="height:' + EMDIST(fracV) + '">';
-	for(var i = 0; i < this.parts.length; i++){
-		var part = this.parts[i];
-		var partV = part.height + part.depth;
-		var partShift = part.height - Math.max(part.height, part.depth) + elementsShift;
-		buf += '<num style="height:' + EMDIST(partV) + ';top:' + EMDIST(partShift) + '">' + part.write() + '</num>'
+StackBox.prototype.write = function(){
+	var rises = [];
+	var v = 0;
+	for(var j = 0; j < this.parts.length; j++){
+		rises[j] = this.height - (v + this.parts[j].height);
+		v += this.parts[j].height + this.parts[j].depth
 	};
-	buf += '</stack>';
-	return buf;
+	return arrx(this.parts, rises, this.height, this.depth);
 }
 
 var mangeHBoxSpaces = function(buf){
@@ -249,15 +240,7 @@ var SegmentBox = function(xs){
 SegmentBox.prototype = Object.create(HBox.prototype);
 SegmentBox.prototype.write = function(adjLeft, adjRight){
 	var buf = HBoxJoin(this.boxes, STD_WRITE);
-	var h = this.height
-	var d = this.depth
-	var shift = h - Math.max(h, d);
-	if(shift < 0.002 && shift > -0.002){
-		return '<seg style="height:' + EMDIST(h + d) + '">' + buf + '</seg>'
-	} else {
-		return '<seg style="height:' + EMDIST(h + d) + ';vertical-align:' + EMDIST(shift) + '">'
-			+ '<ei style="top:' + EMDIST(shift) + '">' + buf + '</ei></seg>'
-	}
+	return buf;
 }
 
 var BBox = function(left, content, right){
@@ -290,7 +273,7 @@ BBox.prototype.write = function(){
 	} else {
 		var SCALE_H = Math.min(2, 1 + 0.25 * (SCALE_V - 1));
 		var baselineAdjustment = - (halfwayHeight * SCALE_H - halfwayHeight) / SCALE_H;
-		var auxStyle = 'font-size:' + (SCALE_H * 100) + '%;vertical-align:' + EMDIST(baselineAdjustment);
+		var auxStyle = 'font-size:' + (SCALE_H * 100) + '%;vertical-align:' + EMDIST(baselineAdjustment + BRACKET_SHIFT);
 		return (this.left.c ? scale_span(1, SCALE_V / SCALE_H, this.left.write(), 'bb l', auxStyle) : '')
 		       + (this.content.write()).replace(/[\s\u2005\u2009\u205f]+((?:<\/i>)+)$/, '$1')
 		       + (this.right.c ? scale_span(1, SCALE_V / SCALE_H, this.right.write(), 'bb r', auxStyle) : '')
@@ -348,15 +331,20 @@ SSBox.prototype.write = function(adjLeft, adjRight){
 }
 
 var SSStackBox = function(base, sup, sub){
-	this.sup = sup ? new ScaleBox(SS_SIZE, sup, SSSTACK_MARGIN_SUP) : null;
-	this.sub = sub ? new ScaleBox(SS_SIZE, sub, SSSTACK_MARGIN_SUB) : null;
+	this.sup = sup ? new ScaleBox(SS_SIZE, sup) : null;
+	this.sub = sub ? new ScaleBox(SS_SIZE, sub) : null;
 	this.base = base;
-	this.height = base.height + (sup ? (this.sup.height + this.sup.depth) : 0);
-	this.depth = base.depth + (sub ? (this.sub.height + this.sub.depth) : 0);
+	this.height = base.height + (sup ? (this.sup.height + this.sup.depth) : 0) + SSSTACK_MARGIN_SUP;
+	this.depth = base.depth + (sub ? (this.sub.height + this.sub.depth) : 0) + SSSTACK_MARGIN_SUB;
 }
 SSStackBox.prototype = new Box;
-SSStackBox.prototype.write = function(){
-	return new StackBox([this.sup, this.base, this.sub]).write(this.height, this.depth)
+SSStackBox.prototype.write = function(adjLeft, adjRight){
+	var rises = [
+		this.sup ? this.height - this.sup.height : 0,
+		0,
+		this.sub ? -this.depth + this.sub.depth : 0
+	];
+	return arrx([this.sup, this.base, this.sub], rises, this.height, this.depth, 'sss')
 }
 
 var FSBox = function(scale, content){
@@ -370,23 +358,15 @@ FSBox.prototype.write = function(){
 	return '<sc style="font-size:' + (this.scale * 100) + '%">' + this.content.write() + '</sc>'
 }
 
-var BigOpBox = function(scale, content){
+var BigOpBox = function(content, scale, ascender, descender){
 	this.scale = scale;
 	this.content = content;
-
-	var halfwayHeight = (content.height - content.depth) / 2;
-	this.height = (content.height - halfwayHeight) * scale + halfwayHeight;
-	this.depth = (halfwayHeight + content.depth) * scale - halfwayHeight;
-	if(this.height < 0) this.height = 0;
-	if(this.depth < 0) this.depth = 0;
-
-	this.halfwayHeight = halfwayHeight
-
+	this.height = ((ascender || OPERATOR_ASC) + BIGOP_SHIFT) * scale;
+	this.depth = ((descender || OPERATOR_DESC) - BIGOP_SHIFT) * scale;
 }
 BigOpBox.prototype = new Box;
 BigOpBox.prototype.write = function(){
-	return '<bo style="font-size:' + (this.scale * 100) + '%;position:relative;top:' +
-		EMDIST((this.halfwayHeight * this.scale - this.halfwayHeight + BIGOP_SHIFT) / (this.scale)) + '">' + this.content.write() + '</bo>'
+	return arrx([new ScaleBox(this.scale, this.content)], [BIGOP_SHIFT * this.scale], this.height, this.depth)
 }
 
 var layout = function(box, config){
