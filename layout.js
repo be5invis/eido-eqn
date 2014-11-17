@@ -15,7 +15,7 @@ var POSITION_SHIFT = 0
 var BIGOP_SHIFT = -0.15
 var SSSTACK_MARGIN_SUP = -0.1
 var SSSTACK_MARGIN_SUB = -0.8
-var BRACKET_SHIFT = 0.04;
+var BRACKET_SHIFT = 0;
 var BRACKET_ASC = 0.9;
 var BRACKET_DESC = LINE_HEIGHT - BRACKET_ASC
 
@@ -311,7 +311,7 @@ BBox.prototype.write = function(){
 		SCALE_V = 1;
 		return '<e class="bn l">' + this.left.write() + '</e>' + (this.content.write()).replace(/[\s\u2009\u205f]+((?:<\/i>)+)$/, '$1') + '<e class="bn r">' + this.right.write() + '</e>';
 	} else {
-		var SCALE_H = Math.min(2, 1 + 0.25 * (SCALE_V - 1));
+		var SCALE_H = Math.min(2, 1 + 0.4 * (SCALE_V - 1));
 		var baselineAdjustment = - (halfwayHeight * SCALE_H - halfwayHeight) / SCALE_H;
 		var auxStyle = 'font-size:' + em(SCALE_H) + ';vertical-align:' + EMDIST(baselineAdjustment + BRACKET_SHIFT);
 		return (this.left.c ? scale_span(SCALE_V / SCALE_H, this.left.write(), 'bb l', auxStyle) : '')
