@@ -27,15 +27,15 @@
 		> .ei, > ei {
 			.e;
 			position:relative;
-		}
+ 		}
 		display: inline-block;
 		text-align: left;
-	}
+ 	}
 	.e () {
 		display: inline-block;
-	}
+ 	}
 	.b () {
-		display: block;
+ 		display: block;
 		white-space: nowrap;
 	}
 	.h, hd {
@@ -61,8 +61,8 @@
 			text-align: center;
 		}
 		> .fdv, fdv {
-			height: 1px;
-			background: black;
+ 			height: 1px;
+ 			background: black;
 			overflow: hidden;
 			margin: -1px 0 0 0;
 		}
@@ -80,7 +80,7 @@
 		position: relative;
 		&:before {
 			content: ' ';
-			display: block;
+ 			display: block;
 			position: absolute;
 			top: -1px;
 			left: 0;
@@ -130,11 +130,72 @@
 	}
 	sp, .sp {
 		white-space: pre-wrap;
+ 	}
+	e.db-overline {
+ 		position: relative;
+		&:before {
+			display: block;
+			content: ' ';
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			height: 1px;
+			background: black
+		}
+ 	}
+	e.db-underline {
+		position: relative;
+		&:before {
+			display: block;
+			content: ' ';
+			position: absolute;
+			bottom: 0;
+			left: 0;
+			right: 0;
+			height: 1px;
+			background: black
+		}
+ 	}
+	e.db-red { color: red }
+	e.db-green { color: green }
+	e.db-blue { color: blue }
+ 	code {
+ 		color: #900;
+ 	}
+ 	eb {
+		display: block;
+		height: 0;
+		width: 0;
+		opacity: 0;
 	}
-	code {
-		color: #900;
+	r {
+		display: inline-block;
+		position: relative;
+		> ri {
+			position: relative;
+			display: block;
+			height: 0;
+			> fl {
+				position: absolute;
+				top: 0;
+				left: 0;
+				right: 0;
+				height: 0.05em;
+				background: black;
+				overflow: hidden;
+			}
+		}
 	}
-}
+	r.frac > ri{
+		text-align: center;
+		padding-left: 0.2em;
+		padding-right: 0.2em;
+	}
+	r.sss > ri {
+		text-align: center
+	}
+ }
 
 div.eqn-display {
 	.parag;
