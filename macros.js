@@ -12,8 +12,8 @@ var SpBox = layouter.SpBox;
 var BCBox = layouter.BCBox;
 var ScaleBox = layouter.ScaleBox;
 var FracBox = layouter.FracBox;
-var Stack2Box = layouter.Stack2Box;
 var StackBox = layouter.StackBox;
+var MatrixBox = layouter.MatrixBox;
 var HBox = layouter.HBox;
 var BBox = layouter.BBox;
 var SqrtBox = layouter.SqrtBox;
@@ -26,14 +26,24 @@ var BigOpBox = layouter.BigOpBox;
 var OPERATOR_SCALE = 1.5;
 var INTEGRATE_SCALE = 2;
 
+var ASCENDER_OPERATOR = 0.85;
+var DESCENDER_OPERATOR = 0.5;
+var ASCENDER_INTEGRATE = 0.9;
+var DESCENDER_INTEGRATE = 0.5;
+var OPERATOR_SHIFT = -0.18;
+var INTEGRATE_SHIFT = -0.2;
+
 var CBM = function(s){
 	return function(){return new CBox(s)}
 }
 var OBM = function(s){
 	return function(){return new OpBox(s)}
 }
-var XBM = function(s, scale, ascender, descender){
-	return function(){return new BigOpBox( new CBox(s), scale || OPERATOR_SCALE, ascender, descender)}
+var BIGOPBM = function(s, scale, ascender, descender){
+	return function(){return new BigOpBox( new CBox(s), OPERATOR_SCALE, ASCENDER_OPERATOR, DESCENDER_OPERATOR, OPERATOR_SHIFT)}
+}
+var INTEGRALBM = function(s, scale, ascender, descender){
+	return function(){return new BigOpBox( new CBox(s), INTEGRATE_SCALE, ASCENDER_INTEGRATE, DESCENDER_INTEGRATE, INTEGRATE_SHIFT)}
 }
 var VBM = function(s){
 	return function(){return new VarBox(s)}
@@ -144,6 +154,32 @@ macros.right = function(content, bracketRight){
 	}
 }
 
+macros['&'] = function(left, right){
+	if(!(left instanceof MatrixBox)) left = new MatrixBox([[left]])
+	if(!(right instanceof MatrixBox)) right = new MatrixBox([[right]])
+	var rows = Math.max(left.rows, right.rows);
+	var columns = left.columns + right.columns
+	var m = []
+	for(var j = 0; j < rows; j++){
+		var r = [];
+		for(var k = 0; k < left.columns; k++){
+			if(left.boxes[j] && left.boxes[j][k]) r.push(left.boxes[j][k])
+			else r.push(null)
+		}
+		for(var k = 0; k < right.columns; k++){
+			if(right.boxes[j] && right.boxes[j][k]) r.push(right.boxes[j][k])
+			else r.push(null)
+		};
+		m[j] = r;
+	};
+	return new MatrixBox(m)
+}
+macros['//'] = function(upper, lower){
+	if(!(upper instanceof MatrixBox)) upper = new MatrixBox([[upper]])
+	if(!(lower instanceof MatrixBox)) lower = new MatrixBox([[lower]])
+	return new MatrixBox(upper.boxes.concat(lower.boxes))
+}
+
 macros.underline = function(content){
 	return new DecoBox(content, 'underline')
 };
@@ -155,7 +191,8 @@ macros.underline = function(content){
 	var sym = CBM;
 	var mathchar = CBM;
 	var op = OBM;
-	var bigop = XBM;
+	var bigop = BIGOPBM;
+	var intop = INTEGRALBM;
 	var comb = function(s){
 		return function(b){
 			if(b instanceof CBox){
@@ -348,15 +385,15 @@ macros.underline = function(content){
 	macros.prod = bigop("\u220F");
 	macros.coprod = bigop("\u2210");
 	macros.sum = bigop("\u2211");
-	macros.int = bigop("\u222B", INTEGRATE_SCALE);
-	macros.iint = bigop("\u222C", INTEGRATE_SCALE);
-	macros.iiint = bigop("\u222D", INTEGRATE_SCALE);
-	macros.oint = bigop("\u222E", INTEGRATE_SCALE);
-	macros.oiint = bigop("\u222F", INTEGRATE_SCALE);
-	macros.oiiint = bigop("\u2230", INTEGRATE_SCALE);
-	macros.intclockwise = bigop("\u2231", INTEGRATE_SCALE);
-	macros.varointclockwise = bigop("\u2232", INTEGRATE_SCALE);
-	macros.ointctrclockwise = bigop("\u2233", INTEGRATE_SCALE);
+	macros.int = intop("\u222B");
+	macros.iint = intop("\u222C");
+	macros.iiint = intop("\u222D");
+	macros.oint = intop("\u222E");
+	macros.oiint = intop("\u222F");
+	macros.oiiint = intop("\u2230");
+	macros.intclockwise = intop("\u2231");
+	macros.varointclockwise = intop("\u2232");
+	macros.ointctrclockwise = intop("\u2233");
 	macros.bigwedge = bigop("\u22C0");
 	macros.bigvee = bigop("\u22C1");
 	macros.bigcap = bigop("\u22C2");
@@ -379,24 +416,24 @@ macros.underline = function(content){
 	macros.disjquant = bigop("\u2A08");
 	macros.bigtimes = bigop("\u2A09");
 	macros.modtwosum = bigop("\u2A0A");
-	macros.sumint = bigop("\u2A0B", INTEGRATE_SCALE);
-	macros.iiiint = bigop("\u2A0C", INTEGRATE_SCALE);
-	macros.intbar = bigop("\u2A0D", INTEGRATE_SCALE);
-	macros.intBar = bigop("\u2A0E", INTEGRATE_SCALE);
-	macros.fint = bigop("\u2A0F", INTEGRATE_SCALE);
-	macros.cirfnint = bigop("\u2A10", INTEGRATE_SCALE);
-	macros.awint = bigop("\u2A11", INTEGRATE_SCALE);
-	macros.rppolint = bigop("\u2A12", INTEGRATE_SCALE);
-	macros.scpolint = bigop("\u2A13", INTEGRATE_SCALE);
-	macros.npolint = bigop("\u2A14", INTEGRATE_SCALE);
-	macros.pointint = bigop("\u2A15", INTEGRATE_SCALE);
-	macros.sqint = bigop("\u2A16", INTEGRATE_SCALE);
-	macros.intlarhk = bigop("\u2A17", INTEGRATE_SCALE);
-	macros.intx = bigop("\u2A18", INTEGRATE_SCALE);
-	macros.intcap = bigop("\u2A19", INTEGRATE_SCALE);
-	macros.intcup = bigop("\u2A1A", INTEGRATE_SCALE);
-	macros.upint = bigop("\u2A1B", INTEGRATE_SCALE);
-	macros.lowint = bigop("\u2A1C", INTEGRATE_SCALE);
+	macros.sumint = intop("\u2A0B");
+	macros.iiiint = intop("\u2A0C");
+	macros.intbar = intop("\u2A0D");
+	macros.intBar = intop("\u2A0E");
+	macros.fint = intop("\u2A0F");
+	macros.cirfnint = intop("\u2A10");
+	macros.awint = intop("\u2A11");
+	macros.rppolint = intop("\u2A12");
+	macros.scpolint = intop("\u2A13");
+	macros.npolint = intop("\u2A14");
+	macros.pointint = intop("\u2A15");
+	macros.sqint = intop("\u2A16");
+	macros.intlarhk = intop("\u2A17");
+	macros.intx = intop("\u2A18");
+	macros.intcap = intop("\u2A19");
+	macros.intcup = intop("\u2A1A");
+	macros.upint = intop("\u2A1B");
+	macros.lowint = intop("\u2A1C");
 	macros.Join = bigop("\u2A1D");
 	macros.bigtriangleleft = bigop("\u2A1E");
 	macros.zcmp = bigop("\u2A1F");

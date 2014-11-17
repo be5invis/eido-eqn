@@ -11,7 +11,6 @@ var SpBox = layouter.SpBox;
 var BCBox = layouter.BCBox;
 var ScaleBox = layouter.ScaleBox;
 var FracBox = layouter.FracBox;
-var Stack2Box = layouter.Stack2Box;
 var StackBox = layouter.StackBox;
 var HBox = layouter.HBox;
 var BBox = layouter.BBox;

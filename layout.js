@@ -3,8 +3,8 @@ var CHAR_ASC = 0.9;
 var CHAR_DESC = LINE_HEIGHT - CHAR_ASC;
 var STACK_MIDDLE = 0.15;
 var FRAC_MIDDLE = 0.1;
-var OPERATOR_ASC = 0.8
-var OPERATOR_DESC = LINE_HEIGHT - OPERATOR_ASC
+var OPERATOR_ASC = 0.9
+var OPERATOR_DESC = 0.5
 var FRAC_SHIFT_MID = 0.6
 var STACK_SHIFT_MID = 0.6
 var FRAC_PADDING = 0.1
@@ -13,11 +13,13 @@ var SUP_SHIFT = 1.3
 var SUB_SHIFT = 0.5
 var POSITION_SHIFT = 0
 var BIGOP_SHIFT = -0.15
-var SSSTACK_MARGIN_SUP = 0.05
-var SSSTACK_MARGIN_SUB = -1.1
-var BRACKET_SHIFT = 0
+var SSSTACK_MARGIN_SUP = -0.1
+var SSSTACK_MARGIN_SUB = -0.8
+var BRACKET_SHIFT = 0.04;
+var BRACKET_ASC = 0.9;
+var BRACKET_DESC = LINE_HEIGHT - BRACKET_ASC
 
-function em(x){	return x.toFixed(2).replace(/\.?0+$/, '') + 'em' }
+function em(x){	return (Math.round(x * 100) / 100).toFixed(2).replace(/\.?0+$/, '') + 'em' }
 function arr1(box, rise, height, depth){
 	return arrx([box], [rise], height, depth)
 }
@@ -120,6 +122,15 @@ BCBox.prototype.spaceAfter  = true;
 BCBox.prototype.write = function(adjLeft, adjRight){
 	return '<op>' + this.c + '</op>'
 }
+var BracketBox = function(c){
+	this.height = BRACKET_ASC
+	this.depth = BRACKET_DESC
+	this.c = c
+}
+BracketBox.prototype = new CBox;
+BracketBox.prototype.write = function(adjLeft, adjRight){
+	return this.c
+}
 var ScaleBox = function(scale, b, baselineShift){
 	this.content = b;
 	this.scale = scale;
@@ -158,20 +169,6 @@ FracBox.prototype.write = function(){
 		this.height, this.depth, 'frac')
 }
 
-function Stack2Box(num, den){
-	this.num = num;
-	this.den = den;
-	this.height = this.num.height + this.num.depth + FRAC_MIDDLE;
-	this.depth = this.den.height + this.den.depth - FRAC_MIDDLE;
-}
-Stack2Box.prototype = new Box;
-Stack2Box.prototype.write = function(){
-	return arrx(
-		[this.num, this.den], 
-		[this.height - this.num.height, this.height - this.num.height - this.num.depth - this.den.height], 
-		this.height, this.depth, 'frac')
-}
-
 function StackBox(boxes){
 	boxes = boxes.filter(function(x){ return !!x })
 	var v = 0;
@@ -191,6 +188,49 @@ StackBox.prototype.write = function(){
 		v += this.parts[j].height + this.parts[j].depth
 	};
 	return arrx(this.parts, rises, this.height, this.depth);
+}
+
+function MatrixBox(boxes){
+	this.boxes = boxes;
+	this.rows = boxes.length;
+	this.columns = 0;
+	var rowHeights = [];
+	var rowDepthes = [];
+	var v = 0;
+	for(var j = 0; j < boxes.length; j++){
+		var rh = 0;
+		var rd = 0;
+		for(var k = 0; k < boxes[j].length; k++) if(boxes[j][k]){
+			if(boxes[j][k].height > rh) rh = boxes[j][k].height;
+			if(boxes[j][k].depth > rd) rd = boxes[j][k].depth;
+		};
+		rowHeights[j] = rh;
+		rowDepthes[j] = rd;
+		v += rh + rd;
+		this.columns = Math.max(this.columns, boxes[j].length)
+	};
+	this.rowHeights = rowHeights
+	this.rowDepthes = rowDepthes
+	this.height = v / 2 + STACK_MIDDLE;
+	this.depth = v / 2 - STACK_MIDDLE
+}
+MatrixBox.prototype = new Box;
+MatrixBox.prototype.write = function(){
+	var rises = [];
+	var v = 0;
+	for(var j = 0; j < this.rows; j++) {
+		rises[j] = this.height - (v + this.rowHeights[j]);
+		v += this.rowHeights[j] + this.rowDepthes[j]
+	}
+	var buf = [];
+	for(var k = 0; k < this.columns; k++){
+		var column = [];
+		for(var j = 0; j < this.rows; j++) {
+			column[j] = this.boxes[j][k];
+		}
+		buf[k] = arrx(column, rises, this.height, this.depth)
+	};
+	return buf.join(MATH_SPACE);
 }
 
 var mangeHBoxSpaces = function(buf){
@@ -251,12 +291,12 @@ var BBox = function(left, content, right){
 	this.content = content
 }
 
-var scale_span = function(h, v, t, k, aux){
-	return '<e class="' + (k || 'bb') + '" style="transform:scale('+ h + ',' + v + ');'
-			+ '-webkit-transform:scale('+ h + ',' + v + ');'
-			+ '-moz-transform:scale('+ h + ',' + v + ');'
-			+ '-ms-transform:scale('+ h + ',' + v + ');'
-			+ '-o-transform:scale('+ h + ',' + v + ');'
+var scale_span = function(v, t, k, aux){
+	return '<e class="' + (k || 'bb') + '" style="transform:scaley('+ v + ');'
+			+ '-webkit-transform:scaley('+ v + ');'
+			+ '-moz-transform:scaley('+ v + ');'
+			+ '-ms-transform:scaley('+ v + ');'
+			+ '-o-transform:scaley('+ v + ');'
 			+ (aux || '') + '">' + t + "</e>"
 }
 BBox.prototype = new Box;
@@ -266,17 +306,17 @@ BBox.prototype.write = function(){
 	var contentUpperHeight = this.content.height - halfwayHeight;
 	var contentLowerDepth = this.content.depth + halfwayHeight;
 
-	var SCALE_V = Math.ceil(8 * Math.max(1, contentUpperHeight / halfBracketHeight, contentLowerDepth / halfBracketHeight)) / 8;
+	var SCALE_V = Math.ceil(8 * Math.pow(Math.max(1, contentUpperHeight / halfBracketHeight, contentLowerDepth / halfBracketHeight), 1.2)) / 8;
 	if(SCALE_V <= 1.1) {
 		SCALE_V = 1;
 		return '<e class="bn l">' + this.left.write() + '</e>' + (this.content.write()).replace(/[\s\u2009\u205f]+((?:<\/i>)+)$/, '$1') + '<e class="bn r">' + this.right.write() + '</e>';
 	} else {
 		var SCALE_H = Math.min(2, 1 + 0.25 * (SCALE_V - 1));
 		var baselineAdjustment = - (halfwayHeight * SCALE_H - halfwayHeight) / SCALE_H;
-		var auxStyle = 'font-size:' + (SCALE_H * 100) + '%;vertical-align:' + EMDIST(baselineAdjustment + BRACKET_SHIFT);
-		return (this.left.c ? scale_span(1, SCALE_V / SCALE_H, this.left.write(), 'bb l', auxStyle) : '')
+		var auxStyle = 'font-size:' + em(SCALE_H) + ';vertical-align:' + EMDIST(baselineAdjustment + BRACKET_SHIFT);
+		return (this.left.c ? scale_span(SCALE_V / SCALE_H, this.left.write(), 'bb l', auxStyle) : '')
 		       + (this.content.write()).replace(/[\s\u2005\u2009\u205f]+((?:<\/i>)+)$/, '$1')
-		       + (this.right.c ? scale_span(1, SCALE_V / SCALE_H, this.right.write(), 'bb r', auxStyle) : '')
+		       + (this.right.c ? scale_span(SCALE_V / SCALE_H, this.right.write(), 'bb r', auxStyle) : '')
 	}
 }
 
@@ -358,15 +398,19 @@ FSBox.prototype.write = function(){
 	return '<sc style="font-size:' + (this.scale * 100) + '%">' + this.content.write() + '</sc>'
 }
 
-var BigOpBox = function(content, scale, ascender, descender){
+var BigOpBox = function(content, scale, ascender, descender, shift){
 	this.scale = scale;
 	this.content = content;
-	this.height = ((ascender || OPERATOR_ASC) + BIGOP_SHIFT) * scale;
-	this.depth = ((descender || OPERATOR_DESC) - BIGOP_SHIFT) * scale;
+	if(arguments.length < 3) ascender = OPERATOR_ASC
+	if(arguments.length < 4) descender = OPERATOR_DESC
+	if(arguments.length < 5) shift = BIGOP_SHIFT
+	this.height = (ascender + shift) * scale;
+	this.depth = (descender - shift) * scale;
+	this.shift = shift;
 }
 BigOpBox.prototype = new Box;
 BigOpBox.prototype.write = function(){
-	return arrx([new ScaleBox(this.scale, this.content)], [BIGOP_SHIFT * this.scale], this.height, this.depth)
+	return arrx([new ScaleBox(this.scale, this.content)], [this.shift * this.scale], this.height, this.depth)
 }
 
 var layout = function(box, config){
@@ -406,8 +450,8 @@ exports.BCBox = BCBox;
 
 exports.ScaleBox = ScaleBox;
 exports.FracBox = FracBox;
-exports.Stack2Box = Stack2Box;
 exports.StackBox = StackBox;
+exports.MatrixBox = MatrixBox;
 exports.HBox = HBox;
 exports.BBox = BBox;
 exports.SqrtBox = SqrtBox;
