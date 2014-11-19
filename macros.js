@@ -154,7 +154,20 @@ macros.right = function(content, bracketRight){
 	}
 }
 
+// Matrix macros
 macros['&'] = function(left, right){
+	if(!(left instanceof MatrixBox)) left = new MatrixBox([[left]]);
+	var boxes = left.boxes;
+	if(!boxes[boxes.length - 1]) boxes[boxes.length - 1] = [];
+	boxes[boxes.length - 1].push(right);
+	return new MatrixBox(boxes)
+}
+macros['//'] = function(left, right){
+	if(!(left instanceof MatrixBox)) left = new MatrixBox([[left]]);
+	var boxes = left.boxes.concat([[right]]);
+	return new MatrixBox(boxes);
+}
+macros['&&'] = function(left, right){
 	if(!(left instanceof MatrixBox)) left = new MatrixBox([[left]])
 	if(!(right instanceof MatrixBox)) right = new MatrixBox([[right]])
 	var rows = Math.max(left.rows, right.rows);
@@ -174,10 +187,15 @@ macros['&'] = function(left, right){
 	};
 	return new MatrixBox(m)
 }
-macros['//'] = function(upper, lower){
+macros['///'] = function(upper, lower){
 	if(!(upper instanceof MatrixBox)) upper = new MatrixBox([[upper]])
 	if(!(lower instanceof MatrixBox)) lower = new MatrixBox([[lower]])
 	return new MatrixBox(upper.boxes.concat(lower.boxes))
+}
+macros['malign'] = function(left, config){
+	if(!(config instanceof CBox)) return left;
+	if(!(left instanceof MatrixBox)) return left;
+	return new MatrixBox(left.boxes, config.c)
 }
 
 macros.underline = function(content){

@@ -19,6 +19,9 @@ var BRACKET_SHIFT = 0;
 var BRACKET_ASC = 0.9;
 var BRACKET_DESC = LINE_HEIGHT - BRACKET_ASC
 
+var MATH_SPACE = '\u2005'
+var MATRIX_SPACE = '\u2000'
+
 function em(x){	return (Math.round(x * 100) / 100).toFixed(2).replace(/\.?0+$/, '') + 'em' }
 function arr1(box, rise, height, depth){
 	return arrx([box], [rise], height, depth)
@@ -33,7 +36,6 @@ function arrx(boxes, rises, height, depth, cl){
 }
 var EMDIST = em;
 
-var MATH_SPACE = '\u2005'
 
 var Box = function(){
 	this.height = 0;
@@ -190,10 +192,11 @@ StackBox.prototype.write = function(){
 	return arrx(this.parts, rises, this.height, this.depth);
 }
 
-function MatrixBox(boxes){
+function MatrixBox(boxes, alignments){
 	this.boxes = boxes;
 	this.rows = boxes.length;
 	this.columns = 0;
+	this.alignments = alignments || '';
 	var rowHeights = [];
 	var rowDepthes = [];
 	var v = 0;
@@ -209,10 +212,10 @@ function MatrixBox(boxes){
 		v += rh + rd;
 		this.columns = Math.max(this.columns, boxes[j].length)
 	};
-	this.rowHeights = rowHeights
-	this.rowDepthes = rowDepthes
+	this.rowHeights = rowHeights;
+	this.rowDepthes = rowDepthes;
 	this.height = v / 2 + STACK_MIDDLE;
-	this.depth = v / 2 - STACK_MIDDLE
+	this.depth = v / 2 - STACK_MIDDLE;
 }
 MatrixBox.prototype = new Box;
 MatrixBox.prototype.write = function(){
@@ -228,18 +231,12 @@ MatrixBox.prototype.write = function(){
 		for(var j = 0; j < this.rows; j++) {
 			column[j] = this.boxes[j][k];
 		}
-		buf[k] = arrx(column, rises, this.height, this.depth)
+		buf[k] = arrx(column, rises, this.height, this.depth, 'mc' + (this.alignments[k] || '').trim())
 	};
-	return buf.join(MATH_SPACE);
+	return buf.join(MATRIX_SPACE);
 }
 
-var mangeHBoxSpaces = function(buf){
-	return buf.replace(/[ \u205f\u2005]*[\u2005\u205f][ \u2005\u205f]*/g, '\u205f')
-	          .replace(/^[\s\u2009\u205f\u2005]+/g, '')
-	          .replace(/[\s\u2009\u205f\u2005]+$/g, '');
-}
-
-function HBoxJoin(parts, f){
+function hJoin(parts, f){
 	var buf = '';
 	for(var i = 0; i < parts.length; i++) {
 		buf += (i > 0 && (parts[i].spaceBefore || parts[i - 1].spaceAfter) ? MATH_SPACE : '') 
@@ -271,7 +268,7 @@ var HBox = function(xs, spaceQ){
 }
 HBox.prototype = new Box
 HBox.prototype.write = function(adjLeft, adjRight){
-	return HBoxJoin(this.boxes, STD_WRITE)
+	return hJoin(this.boxes, STD_WRITE)
 }
 
 var SegmentBox = function(xs){
@@ -279,7 +276,7 @@ var SegmentBox = function(xs){
 }
 SegmentBox.prototype = Object.create(HBox.prototype);
 SegmentBox.prototype.write = function(adjLeft, adjRight){
-	var buf = HBoxJoin(this.boxes, STD_WRITE);
+	var buf = hJoin(this.boxes, STD_WRITE);
 	return buf;
 }
 
@@ -431,7 +428,7 @@ var layout = function(box, config){
 		}
 		if(segment.length) buf.push(new SegmentBox(segment)); 
 		segment = [];
-		return HBoxJoin(buf, STD_WRITE);
+		return hJoin(buf, STD_WRITE);
 	} else {
 		return (new SegmentBox([box])).write()
 	}
