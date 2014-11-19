@@ -53,7 +53,7 @@ var SPACE = 6;
 	};
 	var lex = eqn_lex = function(s){
 		var q = [];
-		walk(/("(?:[^\\\"]|\\.)*")|(`(?:[^`]|``)*`)|([a-zA-Z0-9\u0080-\uffff]+|\.\d+)|([\[\]\(\)\{\}])|([\.\,\;]|[\/<>?:'|\\\-_+=~!@#$%^&*]+)/g, s, function(m, text, tt, id, b, sy){
+		walk(/("(?:[^\\\"]|\\.)*")|(`(?:[^`]|``)*`)|(:?[a-zA-Z0-9\u0080-\uffff]+:?|\.\d+)|([\[\]\(\)\{\}])|([\.\,\;]|[\/<>?:'|\\\-_+=~!@#$%^&*]+)/g, s, function(m, text, tt, id, b, sy){
 			if(text) q.push({type: TEXT, c: text.replace(/\\"/g, '"')})
 			if(tt) q.push({type: TT, c: tt})
 			if(id) q.push({type: ID, c: id})
@@ -71,16 +71,28 @@ var SPACE = 6;
 		var expr = function(){
 			var terms = [];
 			while(q[j] &&!(q[j].c === ')' || q[j].c === ']' || q[j].c === '}')) {
-				if(macros[q[j].c] && macros[q[j].c] instanceof Function && (macros[q[j].c].arity || macros[q[j].c].length)){
-					var themacro = macros[q[j].c];
+				if(macros[q[j].c] && macros[q[j].c] instanceof Function && (macros[q[j].c].arity || macros[q[j].c].length)) {
+					var macroname = q[j].c
+					var themacro = macros[macroname];
 					var arity = themacro.arity || themacro.length;
 					j++;
-					var parameters = [terms[terms.length - 1]];
-					terms.length -= 1;
-					for(var i = 1; i < arity; i++){
-						parameters.push(term());
+					if(/^:/.test(macroname)) {
+						terms = terms.slice(0, -arity).concat(themacro.apply(macros, terms.slice(-arity)))
+					} else if(/:$/.test(macroname)) {
+						var parameters = [];
+						for(var i = 0; i < arity; i++){
+							parameters.push(term());
+						}
+						terms.push(themacro.apply(macros, parameters))
+					} else {
+						var parameters = [terms[terms.length - 1]];
+						terms.length -= 1;
+						for(var i = 1; i < arity; i++){
+							parameters.push(term());
+						}
+						terms.push(themacro.apply(macros, parameters))
 					}
-					terms.push(themacro.apply(macros, parameters))
+
 				} else {
 					terms.push(term());
 				}
