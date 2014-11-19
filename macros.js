@@ -26,12 +26,12 @@ var BigOpBox = layouter.BigOpBox;
 var OPERATOR_SCALE = 1.5;
 var INTEGRATE_SCALE = 2;
 
-var ASCENDER_OPERATOR = 0.85;
-var DESCENDER_OPERATOR = 0.5;
-var ASCENDER_INTEGRATE = 0.9;
-var DESCENDER_INTEGRATE = 0.5;
-var OPERATOR_SHIFT = -0.18;
-var INTEGRATE_SHIFT = -0.2;
+var ASCENDER_OPERATOR = 0.976;
+var DESCENDER_OPERATOR = 0.4;
+var ASCENDER_INTEGRATE = 0.976;
+var DESCENDER_INTEGRATE = 0.35;
+var OPERATOR_SHIFT = -0.09;
+var INTEGRATE_SHIFT = -0.17;
 
 var CBM = function(s){
 	return function(){return new CBox(s)}
@@ -153,6 +153,7 @@ macros.right = function(content, bracketRight){
 		return new BBox('', content, bcl)
 	}
 }
+macros.null = function(){ return null }
 
 // Matrix macros
 macros['&'] = function(left, right){
@@ -470,6 +471,7 @@ macros.underline = function(content){
 	macros.fracslash = op("\u2044");
 	macros.upand = op("\u214B");
 	macros.minus = op("\u2212");
+	macros.minusx = mathchar("\u2212");
 	macros.mp = op("\u2213");
 	macros.dotplus = op("\u2214");
 	macros.divslash = op("\u2215");
