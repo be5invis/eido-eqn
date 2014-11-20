@@ -145,6 +145,26 @@ ScaleBox.prototype = new Box;
 ScaleBox.prototype.write = function(){
 	return '<r style="height:' + EMDIST(this.height + this.depth) + '"><ri style="font-size:' + em(this.scale) + '">' + this.content.write() + '</ri></r>'
 }
+var RaiseBox = function(raise, b, recalculateMetrics){
+	this.content = b;
+	this.raise = raise;
+	this.height = recalculateMetrics ? Math.max(0, b.height + raise) : b.height;
+	this.depth = recalculateMetrics ? Math.max(0, b.depth - raise) : b.depth;
+}
+RaiseBox.prototype = new Box;
+RaiseBox.prototype.write = function(){
+	return arrx([this.content], [this.raise], this.height, this.depth)
+}
+var KernBox = function(kern, b){
+	this.content = b;
+	this.kern = kern;
+	this.height = b.height;
+	this.depth = b.depth;
+}
+KernBox.prototype = new Box;
+KernBox.prototype.write = function(adjLeft, adjRight){
+	return '<r style="margin-right:' + em(this.kern) + '">' + this.content.write(adjLeft, false) + '</r>'
+}
 
 function FracLineBox(){
 	this.height = 0;
@@ -460,6 +480,8 @@ exports.SpBox = SpBox;
 exports.BCBox = BCBox;
 
 exports.ScaleBox = ScaleBox;
+exports.RaiseBox = RaiseBox;
+exports.KernBox = KernBox;
 exports.FracBox = FracBox;
 exports.StackBox = StackBox;
 exports.MatrixBox = MatrixBox;

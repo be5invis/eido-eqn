@@ -11,6 +11,8 @@ var SpBox = layouter.SpBox;
 
 var BCBox = layouter.BCBox;
 var ScaleBox = layouter.ScaleBox;
+var RaiseBox = layouter.RaiseBox;
+var KernBox = layouter.KernBox;
 var FracBox = layouter.FracBox;
 var StackBox = layouter.StackBox;
 var MatrixBox = layouter.MatrixBox;
@@ -197,6 +199,20 @@ macros['malign'] = function(left, config){
 	if(!(config instanceof CBox)) return left;
 	if(!(left instanceof MatrixBox)) return left;
 	return new MatrixBox(left.boxes, config.c)
+}
+
+// Scale and raise
+macros['raise'] = function(left, config){
+	if(!(config instanceof CBox)) return left;
+	return new RaiseBox((config.c - 0) || 0, left, true)
+}
+macros['justraise'] = function(left, config){
+	if(!(config instanceof CBox)) return left;
+	return new RaiseBox((config.c - 0) || 0, left, false)
+}
+macros['kern'] = function(left, config){
+	if(!(config instanceof CBox)) return left;
+	return new KernBox((config.c - 0) || 0, left)
 }
 
 macros.underline = function(content){
