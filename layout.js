@@ -6,16 +6,16 @@ var FRAC_MIDDLE = 0.33;
 var OPERATOR_ASC = 0.9
 var OPERATOR_DESC = 0.5
 var FRAC_PADDING = 0.1
-var SS_SIZE = 0.65;
+var SS_SIZE = 0.7;
 var SUP_BOTTOM = -0.75;
 var SUB_TOP = 0.75;
 var SUP_TOP_TOLERENCE = CHAR_ASC + LINE_HEIGHT * SS_SIZE + SUP_BOTTOM - CHAR_ASC;
 var SUB_BOTTOM_TOLERENCE = -(-CHAR_DESC + SUB_TOP - LINE_HEIGHT * SS_SIZE + CHAR_DESC);
 var POSITION_SHIFT = 0
 var BIGOP_SHIFT = 0
-var SSSTACK_MARGIN_SUP = 0
-var SSSTACK_MARGIN_SUB = -0.7
-var BRACKET_SHIFT = 0.06;
+var SSSTACK_MARGIN_SUP = -0.05
+var SSSTACK_MARGIN_SUB = -0.6
+var BRACKET_SHIFT = 0.07;
 var BRACKET_ASC = 0.9;
 var BRACKET_DESC = LINE_HEIGHT - BRACKET_ASC;
 
@@ -441,7 +441,7 @@ var BigOpBox = function(content, scale, ascender, descender, shift){
 }
 BigOpBox.prototype = new Box;
 BigOpBox.prototype.write = function(){
-	return arrx([new ScaleBox(this.scale, this.content)], [this.shift * this.scale], this.height, this.depth)
+	return arrx([new ScaleBox(this.scale, this.content)], [this.shift * this.scale], this.height, this.depth, 'bo')
 }
 
 var layout = function(box, config){
