@@ -9,8 +9,19 @@
 	-webkit-font-feature-settings: normal;
 	text-rendering: optimizeSpeed;
 }
+.eqn_op_font() {
+	font-family: "Math-Symbol", "Math-Text", "Tinos", "Linux Libertine", "Times New Roman", serif;
+
+	// I turned off lnum numbers in Chrome due to a Chrome bug:
+	// when font-feature-settings is on, unicode-range of
+	// @font-face's will fail. It is fixed in Nov 20, 2013, but
+	// I have to wait for newer version of Chrome.
+	-webkit-font-feature-settings: normal;
+	text-rendering: optimizeSpeed;
+}
 // equations
 .eqn {
+	line-height: 1.2;
 	-webkit-font-feature-settings: normal;
 
 	// Chrome bug workaround.
@@ -21,21 +32,21 @@
 		}
 	}
 
-	i, op, sp, e, frac, num, den, fdv, hd, sg, ss, ssi, sc, bo, sqrt, sk, ei {font-style: normal; vertical-align: 0; line-height: 1.2}
+	i, op, sp, e, frac, num, den, fdv, hd, sg, ss, ssi, sc, bo, sqrt, sk, ei {font-style: normal}
 	> u, > seg {
 		text-decoration: none;
 		> .ei, > ei {
 			.e;
 			position:relative;
- 		}
+		}
 		display: inline-block;
 		text-align: left;
- 	}
+	}
 	.e () {
 		display: inline-block;
- 	}
+	}
 	.b () {
- 		display: block;
+		display: block;
 		white-space: nowrap;
 	}
 	.h, hd {
@@ -61,8 +72,8 @@
 			text-align: center;
 		}
 		> .fdv, fdv {
- 			height: 1px;
- 			background: black;
+			height: 1px;
+			background: black;
 			overflow: hidden;
 			margin: -1px 0 0 0;
 		}
@@ -80,7 +91,7 @@
 		position: relative;
 		&:before {
 			content: ' ';
- 			display: block;
+			display: block;
 			position: absolute;
 			top: -1px;
 			left: 0;
@@ -130,9 +141,9 @@
 	}
 	sp, .sp {
 		white-space: pre-wrap;
- 	}
+	}
 	e.db-overline {
- 		position: relative;
+		position: relative;
 		&:before {
 			display: block;
 			content: ' ';
@@ -143,7 +154,7 @@
 			height: 1px;
 			background: black
 		}
- 	}
+	}
 	e.db-underline {
 		position: relative;
 		&:before {
@@ -156,14 +167,14 @@
 			height: 1px;
 			background: black
 		}
- 	}
+	}
 	e.db-red { color: red }
 	e.db-green { color: green }
 	e.db-blue { color: blue }
- 	code {
- 		color: #900;
- 	}
- 	eb {
+	code {
+		color: #900;
+	}
+	eb {
 		display: block;
 		height: 0;
 		width: 0;
@@ -182,6 +193,7 @@
 				left: 0;
 				right: 0;
 				height: 0.05em;
+				min-height: 1px;
 				background: black;
 				overflow: hidden;
 			}
@@ -201,6 +213,10 @@
 	r.mcr > ri {
 		text-align: right
 	}
+	r.ss sp { display: none }
+
+	.big { font-feature-settings: 'ss01'; -webkit-font-feature-settings: 'ss01' }
+	.bigg { font-feature-settings: 'ss02'; -webkit-font-feature-settings: 'ss02' }
  }
 
 div.eqn-display {

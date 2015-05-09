@@ -7,6 +7,7 @@ var CodeBox = layouter.CodeBox;
 var BfBox = layouter.BfBox;
 var OpBox = layouter.OpBox;
 var SpBox = layouter.SpBox;
+var BracketBox = layouter.BracketBox;
 
 var BCBox = layouter.BCBox;
 var ScaleBox = layouter.ScaleBox;
@@ -108,14 +109,14 @@ var SPACE = 6;
 				var r = expr();
 				if(!q[j] || q[j].c !== ')') throw "Mismatch bracket!"
 				j++
-				return new BBox('(', r, ')');
+				return new BBox(new BracketBox('('), r, new BracketBox(')'));
 			}
 			if(token.c === '['){
 				j++;
 				var r = expr();
 				if(!q[j] || q[j].c !== ']') throw "Mismatch bracket!";
 				j++;
-				return new BBox('[', r, ']');
+				return new BBox(new BracketBox('['), r, new BracketBox(']'));
 			}
 			if(token.c === '{'){
 				j++;

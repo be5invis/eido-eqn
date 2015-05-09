@@ -1,4 +1,5 @@
 var layouter = require('./layout');
+var parameters = require('./parameters')
 
 var Box = layouter.Box;
 var CBox = layouter.CBox;
@@ -8,6 +9,7 @@ var CodeBox = layouter.CodeBox;
 var BfBox = layouter.BfBox;
 var OpBox = layouter.OpBox;
 var SpBox = layouter.SpBox;
+var BracketBox = layouter.BracketBox;
 
 var BCBox = layouter.BCBox;
 var ScaleBox = layouter.ScaleBox;
@@ -25,18 +27,21 @@ var SSStackBox = layouter.SSStackBox;
 var FSBox = layouter.FSBox;
 var BigOpBox = layouter.BigOpBox;
 
-var OPERATOR_SCALE = 1.5;
-var INTEGRATE_SCALE = 2;
+var OPERATOR_SCALE = parameters.OPERATOR_SCALE;
+var INTEGRATE_SCALE = parameters.INTEGRATE_SCALE;
 
-var ASCENDER_OPERATOR = 0.976;
-var DESCENDER_OPERATOR = 0.4;
-var ASCENDER_INTEGRATE = 0.976;
-var DESCENDER_INTEGRATE = 0.35;
-var OPERATOR_SHIFT = -0.09;
-var INTEGRATE_SHIFT = -0.17;
+var ASCENDER_OPERATOR = parameters.ASCENDER_OPERATOR;
+var DESCENDER_OPERATOR = parameters.DESCENDER_OPERATOR;
+var ASCENDER_INTEGRATE = parameters.ASCENDER_INTEGRATE;
+var DESCENDER_INTEGRATE = parameters.DESCENDER_INTEGRATE;
+var OPERATOR_SHIFT = parameters.OPERATOR_SHIFT;
+var INTEGRATE_SHIFT = parameters.INTEGRATE_SHIFT;
 
 var CBM = function(s){
 	return function(){return new CBox(s)}
+}
+var BRBM = function(s){
+	return function(){return new BracketBox(s)}
 }
 var OBM = function(s){
 	return function(){return new OpBox(s)}
@@ -59,6 +64,9 @@ var macros = exports.macros = {};
 macros.over = function(left, right){
 	return new FracBox(left, right)
 }
+macros.tover = function(left, right){
+	return new RaiseBox(parameters.FRAC_MIDDLE, new ScaleBox(parameters.SS_SIZE, new RaiseBox(-parameters.FRAC_MIDDLE, new FracBox(left, right), true)), true)
+}
 macros.above = function(upper, lower){
 	var upperParts = [upper], lowerParts = [lower]
 	if(upper instanceof StackBox) upperParts = upper.parts
@@ -76,6 +84,9 @@ macros.squared = function(operand){
 }
 macros.sqrt = macros['sqrt:'] = function(operand){
 	return new SqrtBox(operand);
+}
+macros.root = function(left, right){
+	return new HBox(new KernBox(parameters.ROOT_KERN, new RaiseBox(parameters.ROOT_RISE, new SSBox(new CBox(''), left))), new SqrtBox(right));
 }
 macros['^'] = function(base, sup){
 	if(base instanceof SSBox && ! base.sup){
@@ -132,12 +143,12 @@ macros['vr'] = function(cb){
 }
 macros.left = function(bracketLeft, content){
 	if(bracketLeft instanceof CBox){
-		var bcl = bracketLeft.c
+		var bcl = bracketLeft
 	} else {
 		var bcl = ''
 	}
 	if(content instanceof BBox && content.left.c === ''){
-		return new BBox(bcl, content.content, content.right.c)
+		return new BBox(bcl, content.content, content.right)
 	} else {
 		return new BBox(bcl, content, '')
 	}
@@ -145,12 +156,12 @@ macros.left = function(bracketLeft, content){
 
 macros.right = function(content, bracketRight){
 	if(bracketRight instanceof CBox){
-		var bcl = bracketRight.c
+		var bcl = bracketRight
 	} else {
 		var bcl = ''
 	}
 	if(content instanceof BBox && content.right.c === ''){
-		return new BBox(content.left.c, content.content, bcl)
+		return new BBox(content.left, content.content, bcl)
 	} else {
 		return new BBox('', content, bcl)
 	}
@@ -216,15 +227,22 @@ macros['kern'] = function(left, config){
 }
 
 macros.underline = function(content){
-	return new DecoBox(content, 'underline')
+	return new DecoBox(content, 'text-decoration: underline')
+};
+macros.red = function(content){
+	return new DecoBox(content, 'color:red')
+};
+macros.blue = function(content){
+	return new DecoBox(content, 'color:blue')
 };
 
 (function(){
 
-	var open = function(c){ return function(x){ return this.left(new CBox(c), x) }};
-	var close = function(c){ return function(x){ return this.right(x, new CBox(c)) }};
+	var open = function(c){ return function(x){ return this.left(new BracketBox(c), x) }};
+	var close = function(c){ return function(x){ return this.right(x, new BracketBox(c)) }};
 	var sym = CBM;
 	var mathchar = CBM;
+	var bracketchar = BRBM;
 	var op = OBM;
 	var bigop = BIGOPBM;
 	var intop = INTEGRALBM;
@@ -301,142 +319,144 @@ macros.underline = function(content){
 	macros['quad'] = SPBM("\u2003");
 	macros['qquad'] = SPBM("\u2003\u2003");
 
+	macros.squareroot = bracketchar("\u221A");
+	macros.cuberoot = bracketchar("\u221B");
+	macros.fourthroot = bracketchar("\u221C");
+	
 	// These are symbols imported from Unicode Math.
-	macros.lparen = mathchar("\u0028");
-	macros.lbrack = mathchar("\u005B");
-	macros.lbrace = mathchar("\u007B");
-	macros.squareroot = mathchar("\u221A");
-	macros.cuberoot = mathchar("\u221B");
-	macros.fourthroot = mathchar("\u221C");
-	macros.lceil = mathchar("\u2308");
-	macros.lfloor = mathchar("\u230A");
-	macros.ulcorner = mathchar("\u231C");
-	macros.llcorner = mathchar("\u231E");
-	macros.lmoustache = mathchar("\u23B0");
-	macros.lbrbrak = mathchar("\u2772");
-	macros.lbag = mathchar("\u27C5");
-	macros.longdivision = mathchar("\u27CC");
-	macros.lBrack = mathchar("\u27E6");
-	macros.langle = mathchar("\u27E8");
-	macros.lAngle = mathchar("\u27EA");
-	macros.Lbrbrak = mathchar("\u27EC");
-	macros.lgroup = mathchar("\u27EE");
-	macros.lBrace = mathchar("\u2983");
-	macros.lParen = mathchar("\u2985");
-	macros.llparenthesis = mathchar("\u2987");
-	macros.llangle = mathchar("\u2989");
-	macros.lbrackubar = mathchar("\u298B");
-	macros.lbrackultick = mathchar("\u298D");
-	macros.lbracklltick = mathchar("\u298F");
-	macros.langledot = mathchar("\u2991");
-	macros.lparenless = mathchar("\u2993");
-	macros.Lparengtr = mathchar("\u2995");
-	macros.lblkbrbrak = mathchar("\u2997");
-	macros.lvzigzag = mathchar("\u29D8");
-	macros.Lvzigzag = mathchar("\u29DA");
-	macros.lcurvyangle = mathchar("\u29FC");
-	macros.lbrbrak = mathchar("\u3014");
-	macros.Lbrbrak = mathchar("\u3018");
+	macros.lparen = bracketchar("\u0028");
+	macros.lbrack = bracketchar("\u005B");
+	macros.lbrace = bracketchar("\u007B");
+	macros.lceil = bracketchar("\u2308");
+	macros.lfloor = bracketchar("\u230A");
+	macros.ulcorner = bracketchar("\u231C");
+	macros.llcorner = bracketchar("\u231E");
+	macros.lmoustache = bracketchar("\u23B0");
+	macros.lbrbrak = bracketchar("\u2772");
+	macros.lbag = bracketchar("\u27C5");
+	macros.longdivision = bracketchar("\u27CC");
+	macros.lBrack = bracketchar("\u27E6");
+	macros.langle = bracketchar("\u27E8");
+	macros.lAngle = bracketchar("\u27EA");
+	macros.lBrbrak = bracketchar("\u27EC");
+	macros.lgroup = bracketchar("\u27EE");
+	macros.lBrace = bracketchar("\u2983");
+	macros.lParen = bracketchar("\u2985");
+	macros.llparenthesis = bracketchar("\u2987");
+	macros.llangle = bracketchar("\u2989");
+	macros.lbrackubar = bracketchar("\u298B");
+	macros.lbrackultick = bracketchar("\u298D");
+	macros.lbracklltick = bracketchar("\u298F");
+	macros.langledot = bracketchar("\u2991");
+	macros.lparenless = bracketchar("\u2993");
+	macros.lParengtr = bracketchar("\u2995");
+	macros.lblkbrbrak = bracketchar("\u2997");
+	macros.lvzigzag = bracketchar("\u29D8");
+	macros.lVzigzag = bracketchar("\u29DA");
+	macros.lcurvyangle = bracketchar("\u29FC");
+	macros.lvarbrbrak = bracketchar("\u3014");
+	macros.lVarbrbrak = bracketchar("\u3018");
 
-	macros.rparen = mathchar("\u0029");
-	macros.rbrack = mathchar("\u005D");
-	macros.rbrace = mathchar("\u007D");
-	macros.rceil = mathchar("\u2309");
-	macros.rfloor = mathchar("\u230B");
-	macros.urcorner = mathchar("\u231D");
-	macros.lrcorner = mathchar("\u231F");
-	macros.rmoustache = mathchar("\u23B1");
-	macros.rbrbrak = mathchar("\u2773");
-	macros.rbag = mathchar("\u27C6");
-	macros.rBrack = mathchar("\u27E7");
-	macros.rangle = mathchar("\u27E9");
-	macros.rAngle = mathchar("\u27EB");
-	macros.Rbrbrak = mathchar("\u27ED");
-	macros.rgroup = mathchar("\u27EF");
-	macros.rBrace = mathchar("\u2984");
-	macros.rParen = mathchar("\u2986");
-	macros.rrparenthesis = mathchar("\u2988");
-	macros.rrangle = mathchar("\u298A");
-	macros.rbrackubar = mathchar("\u298C");
-	macros.rbracklrtick = mathchar("\u298E");
-	macros.rbrackurtick = mathchar("\u2990");
-	macros.rangledot = mathchar("\u2992");
-	macros.rparengtr = mathchar("\u2994");
-	macros.Rparenless = mathchar("\u2996");
-	macros.rblkbrbrak = mathchar("\u2998");
-	macros.rvzigzag = mathchar("\u29D9");
-	macros.Rvzigzag = mathchar("\u29DB");
-	macros.rcurvyangle = mathchar("\u29FD");
-	macros.rbrbrak = mathchar("\u3015");
-	macros.Rbrbrak = mathchar("\u3019");
+	macros.rparen = bracketchar("\u0029");
+	macros.rbrack = bracketchar("\u005D");
+	macros.rbrace = bracketchar("\u007D");
+	macros.rceil = bracketchar("\u2309");
+	macros.rfloor = bracketchar("\u230B");
+	macros.urcorner = bracketchar("\u231D");
+	macros.lrcorner = bracketchar("\u231F");
+	macros.rmoustache = bracketchar("\u23B1");
+	macros.rbrbrak = bracketchar("\u2773");
+	macros.rbag = bracketchar("\u27C6");
+	macros.rBrack = bracketchar("\u27E7");
+	macros.rangle = bracketchar("\u27E9");
+	macros.rAngle = bracketchar("\u27EB");
+	macros.rBrbrak = bracketchar("\u27ED");
+	macros.rgroup = bracketchar("\u27EF");
+	macros.rBrace = bracketchar("\u2984");
+	macros.rParen = bracketchar("\u2986");
+	macros.rrparenthesis = bracketchar("\u2988");
+	macros.rrangle = bracketchar("\u298A");
+	macros.rbrackubar = bracketchar("\u298C");
+	macros.rbracklrtick = bracketchar("\u298E");
+	macros.rbrackurtick = bracketchar("\u2990");
+	macros.rangledot = bracketchar("\u2992");
+	macros.rparengtr = bracketchar("\u2994");
+	macros.rParenless = bracketchar("\u2996");
+	macros.rblkbrbrak = bracketchar("\u2998");
+	macros.rvzigzag = bracketchar("\u29D9");
+	macros.rVzigzag = bracketchar("\u29DB");
+	macros.rcurvyangle = bracketchar("\u29FD");
+	macros.rvarbrbrak = bracketchar("\u3015");
+	macros.rVarbrbrak = bracketchar("\u3019");
 
-	macros['lparen:'] = open("\u0028");
-	macros['lbrack:'] = open("\u005B");
-	macros['lbrace:'] = open("\u007B");
-	macros['squareroot:'] = open("\u221A");
-	macros['cuberoot:'] = open("\u221B");
-	macros['fourthroot:'] = open("\u221C");
-	macros['lceil:'] = open("\u2308");
-	macros['lfloor:'] = open("\u230A");
-	macros['ulcorner:'] = open("\u231C");
-	macros['llcorner:'] = open("\u231E");
-	macros['lmoustache:'] = open("\u23B0");
-	macros['lbrbrak:'] = open("\u2772");
-	macros['lbag:'] = open("\u27C5");
-	macros['longdivision:'] = open("\u27CC");
-	macros['lBrack:'] = open("\u27E6");
-	macros['langle:'] = open("\u27E8");
-	macros['lAngle:'] = open("\u27EA");
-	macros['Lbrbrak:'] = open("\u27EC");
-	macros['lgroup:'] = open("\u27EE");
-	macros['lBrace:'] = open("\u2983");
-	macros['lParen:'] = open("\u2985");
-	macros['llparenthesis:'] = open("\u2987");
-	macros['llangle:'] = open("\u2989");
-	macros['lbrackubar:'] = open("\u298B");
-	macros['lbrackultick:'] = open("\u298D");
-	macros['lbracklltick:'] = open("\u298F");
-	macros['langledot:'] = open("\u2991");
-	macros['lparenless:'] = open("\u2993");
-	macros['Lparengtr:'] = open("\u2995");
-	macros['lblkbrbrak:'] = open("\u2997");
-	macros['lvzigzag:'] = open("\u29D8");
-	macros['Lvzigzag:'] = open("\u29DA");
-	macros['lcurvyangle:'] = open("\u29FC");
-	macros['lbrbrak:'] = open("\u3014");
-	macros['Lbrbrak:'] = open("\u3018");
+	macros['paren:'] = macros['lparen:'] = open("\u0028");
+	macros['brack:'] = macros['lbrack:'] = open("\u005B");
+	macros['brace:'] = macros['lbrace:'] = open("\u007B");
+	macros['ceil:'] = macros['lceil:'] = open("\u2308");
+	macros['floor:'] = macros['lfloor:'] = open("\u230A");
+	macros['ucorner:'] = macros['ulcorner:'] = open("\u231C");
+	macros['lcorner:'] = macros['llcorner:'] = open("\u231E");
+	macros['moustache:'] = macros['lmoustache:'] = open("\u23B0");
+	macros['brbrak:'] = macros['lbrbrak:'] = open("\u2772");
+	macros['bag:'] = macros['lbag:'] = open("\u27C5");
+	macros['ongdivision:'] = macros['longdivision:'] = open("\u27CC");
+	macros['Brack:'] = macros['lBrack:'] = open("\u27E6");
+	macros['angle:'] = macros['langle:'] = open("\u27E8");
+	macros['Angle:'] = macros['lAngle:'] = open("\u27EA");
+	macros['Brbrak:'] = macros['lBrbrak:'] = open("\u27EC");
+	macros['group:'] = macros['lgroup:'] = open("\u27EE");
+	macros['Brace:'] = macros['lBrace:'] = open("\u2983");
+	macros['Paren:'] = macros['lParen:'] = open("\u2985");
+	macros['lparenthesis:'] = macros['llparenthesis:'] = open("\u2987");
+	macros['vangle:'] = macros['lvangle:'] = open("\u2989");
+	macros['brackubar:'] = macros['lbrackubar:'] = open("\u298B");
+	macros['brackultick:'] = macros['lbrackultick:'] = open("\u298D");
+	macros['bracklltick:'] = macros['lbracklltick:'] = open("\u298F");
+	macros['angledot:'] = macros['langledot:'] = open("\u2991");
+	macros['parenless:'] = macros['lparenless:'] = open("\u2993");
+	macros['Parengtr'] = macros['lParengtr:'] = open("\u2995");
+	macros['blkbrbrak:'] = macros['lblkbrbrak:'] = open("\u2997");
+	macros['vzigzag:'] = macros['lvzigzag:'] = open("\u29D8");
+	macros['Vzigzag:'] = macros['lVzigzag:'] = open("\u29DA");
+	macros['curvyangle:'] = macros['lcurvyangle:'] = open("\u29FC");
+	macros['brbrak:'] = macros['lbrbrak:'] = open("\u3014");
+	macros['varBrbrak'] = macros['lvarBrbrak:'] = open("\u3018");
+	macros['blank:'] = macros['lblank:'] = open("");
+	macros['|:'] = open("|");
 
-	macros[':rparen'] = close("\u0029");
-	macros[':rbrack'] = close("\u005D");
-	macros[':rbrace'] = close("\u007D");
-	macros[':rceil'] = close("\u2309");
-	macros[':rfloor'] = close("\u230B");
-	macros[':urcorner'] = close("\u231D");
-	macros[':lrcorner'] = close("\u231F");
-	macros[':rmoustache'] = close("\u23B1");
-	macros[':rbrbrak'] = close("\u2773");
-	macros[':rbag'] = close("\u27C6");
-	macros[':rBrack'] = close("\u27E7");
-	macros[':rangle'] = close("\u27E9");
-	macros[':rAngle'] = close("\u27EB");
-	macros[':Rbrbrak'] = close("\u27ED");
-	macros[':rgroup'] = close("\u27EF");
-	macros[':rBrace'] = close("\u2984");
-	macros[':rParen'] = close("\u2986");
-	macros[':rrparenthesis'] = close("\u2988");
-	macros[':rrangle'] = close("\u298A");
-	macros[':rbrackubar'] = close("\u298C");
-	macros[':rbracklrtick'] = close("\u298E");
-	macros[':rbrackurtick'] = close("\u2990");
-	macros[':rangledot'] = close("\u2992");
-	macros[':rparengtr'] = close("\u2994");
-	macros[':Rparenless'] = close("\u2996");
-	macros[':rblkbrbrak'] = close("\u2998");
-	macros[':rvzigzag'] = close("\u29D9");
-	macros[':Rvzigzag'] = close("\u29DB");
-	macros[':rcurvyangle'] = close("\u29FD");
-	macros[':rbrbrak'] = close("\u3015");
-	macros[':Rbrbrak'] = close("\u3019");
+	macros[':paren'] = macros[':rparen'] = close("\u0029");
+	macros[':brack'] = macros[':rbrack'] = close("\u005D");
+	macros[':brace'] = macros[':rbrace'] = close("\u007D");
+	macros[':ceil'] = macros[':rceil'] = close("\u2309");
+	macros[':floor'] = macros[':rfloor'] = close("\u230B");
+	macros[':ucorner'] = macros[':urcorner'] = close("\u231D");
+	macros[':lcorner'] = macros[':lrcorner'] = close("\u231F");
+	macros[':moustache'] = macros[':rmoustache'] = close("\u23B1");
+	macros[':brbrak'] = macros[':rbrbrak'] = close("\u2773");
+	macros[':bag'] = macros[':rbag'] = close("\u27C6");
+	macros[':Brack'] = macros[':rBrack'] = close("\u27E7");
+	macros[':angle'] = macros[':rangle'] = close("\u27E9");
+	macros[':Angle'] = macros[':rAngle'] = close("\u27EB");
+	macros[':Brbrak'] = macros[':rBrbrak'] = close("\u27ED");
+	macros[':group'] = macros[':rgroup'] = close("\u27EF");
+	macros[':Brace'] = macros[':rBrace'] = close("\u2984");
+	macros[':Paren'] = macros[':rParen'] = close("\u2986");
+	macros[':rparenthesis'] = macros[':rrparenthesis'] = close("\u2988");
+	macros[':vangle'] = macros[':rvangle'] = close("\u298A");
+	macros[':brackubar'] = macros[':rbrackubar'] = close("\u298C");
+	macros[':bracklrtick'] = macros[':rbracklrtick'] = close("\u298E");
+	macros[':brackurtick'] = macros[':rbrackurtick'] = close("\u2990");
+	macros[':angledot'] = macros[':rangledot'] = close("\u2992");
+	macros[':parengtr'] = macros[':rparengtr'] = close("\u2994");
+	macros[':Parenless'] = macros[':rParenless'] = close("\u2996");
+	macros[':blkbrbrak'] = macros[':rblkbrbrak'] = close("\u2998");
+	macros[':vzigzag'] = macros[':rvzigzag'] = close("\u29D9");
+	macros[':Vzigzag'] = macros[':rVzigzag'] = close("\u29DB");
+	macros[':curvyangle'] = macros[':rcurvyangle'] = close("\u29FD");
+	macros[':varbrbrak'] = macros[':rvarbrbrak'] = close("\u3015");
+	macros[':Varbrbrak'] = macros[':rVarbrbrak'] = close("\u3019");
+	macros[':blank'] = macros[':rblank'] = close("");
+	macros[':|'] = close("|");
 
 	macros.vert = op("\u007C");
 	macros.Vert = op("\u2016");

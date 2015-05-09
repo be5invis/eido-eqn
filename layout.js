@@ -1,23 +1,27 @@
-var LINE_HEIGHT = 1.2;
-var CHAR_ASC = 0.976;
-var CHAR_DESC = LINE_HEIGHT - CHAR_ASC;
-var STACK_MIDDLE = CHAR_ASC - (CHAR_ASC + CHAR_DESC) / 2;
-var FRAC_MIDDLE = 0.33;
-var OPERATOR_ASC = 0.9
-var OPERATOR_DESC = 0.5
-var FRAC_PADDING = 0.1
-var SS_SIZE = 0.7;
-var SUP_BOTTOM = -0.75;
-var SUB_TOP = 0.75;
-var SUP_TOP_TOLERENCE = CHAR_ASC + LINE_HEIGHT * SS_SIZE + SUP_BOTTOM - CHAR_ASC;
-var SUB_BOTTOM_TOLERENCE = -(-CHAR_DESC + SUB_TOP - LINE_HEIGHT * SS_SIZE + CHAR_DESC);
-var POSITION_SHIFT = 0
-var BIGOP_SHIFT = 0
-var SSSTACK_MARGIN_SUP = -0.05
-var SSSTACK_MARGIN_SUB = -0.6
-var BRACKET_SHIFT = 0.07;
-var BRACKET_ASC = 0.9;
-var BRACKET_DESC = LINE_HEIGHT - BRACKET_ASC;
+var parameters = require('./parameters')
+
+var LINE_HEIGHT = parameters.LINE_HEIGHT
+var CHAR_ASC = parameters.CHAR_ASC
+var CHAR_DESC = parameters.CHAR_DESC
+var STACK_MIDDLE = parameters.STACK_MIDDLE
+var FRAC_MIDDLE = parameters.FRAC_MIDDLE
+var OPERATOR_ASC = parameters.OPERATOR_ASC
+var OPERATOR_DESC = parameters.OPERATOR_DESC
+var FRAC_PADDING = parameters.FRAC_PADDING
+var SS_SIZE = parameters.SS_SIZE
+var SUP_BOTTOM = parameters.SUP_BOTTOM
+var SUB_TOP = parameters.SUB_TOP
+var SUP_TOP_TOLERENCE = parameters.SUP_TOP_TOLERENCE
+var SUB_BOTTOM_TOLERENCE = parameters.SUB_BOTTOM_TOLERENCE
+var POSITION_SHIFT = parameters.POSITION_SHIFT
+var BIGOP_SHIFT = parameters.BIGOP_SHIFT
+var SSSTACK_MARGIN_SUP = parameters.SSSTACK_MARGIN_SUP
+var SSSTACK_MARGIN_SUB = parameters.SSSTACK_MARGIN_SUB
+var BRACKET_SHIFT = parameters.BRACKET_SHIFT
+var BRACKET_SHIFT_2 = parameters.BRACKET_SHIFT_2
+var BRACKET_ASC = parameters.BRACKET_ASC
+var BRACKET_DESC = parameters.BRACKET_DESC
+var BRACKET_GEARS = parameters.BRACKET_GEARS
 
 var MATH_SPACE = '<sp>\u2005</sp>'
 var MATRIX_SPACE = '\u2000'
@@ -303,8 +307,8 @@ SegmentBox.prototype.write = function(adjLeft, adjRight){
 var BBox = function(left, content, right){
 	this.height = content.height
 	this.depth = content.depth
-	this.left = new CBox(left)
-	this.right = new CBox(right)
+	this.left = left instanceof Box ? left : new CBox(left)
+	this.right = right instanceof Box ? right : new CBox(right)
 	this.content = content
 }
 
@@ -323,17 +327,23 @@ BBox.prototype.write = function(){
 	var contentUpperHeight = this.content.height - halfwayHeight;
 	var contentLowerDepth = this.content.depth + halfwayHeight;
 
-	var SCALE_V = Math.ceil(8 * Math.max(1, contentUpperHeight / halfBracketHeight, contentLowerDepth / halfBracketHeight)) / 8;
+	var SCALE_V = 1 / BRACKET_GEARS * Math.ceil(BRACKET_GEARS * Math.max(1, 
+		contentUpperHeight / halfBracketHeight, 
+		contentLowerDepth / halfBracketHeight));
+	var scaleClass = '';
+	if(SCALE_V >= 1.5) scaleClass = ' big'
+	if(SCALE_V >= 4) scaleClass = ' bigg'
 	if(SCALE_V <= 1.1) {
 		SCALE_V = 1;
 		return '<e class="bn l">' + this.left.write() + '</e>' + (this.content.write()).replace(/[\s\u2009\u205f]+((?:<\/i>)+)$/, '$1') + '<e class="bn r">' + this.right.write() + '</e>';
 	} else {
-		var SCALE_H = Math.min(2, 1 + 0.4 * (SCALE_V - 1));
+		var SCALE_H = 1 + Math.pow(SCALE_V - 1, 0.4) * 0.5;
+		//var SCALE_H = SCALE_V;
 		var baselineAdjustment = - (halfwayHeight * SCALE_H - halfwayHeight) / SCALE_H;
-		var auxStyle = 'font-size:' + em(SCALE_H) + ';vertical-align:' + EMDIST(baselineAdjustment + BRACKET_SHIFT);
-		return (this.left.c ? scale_span(SCALE_V / SCALE_H, this.left.write(), 'bb l', auxStyle) : '')
+		var auxStyle = 'font-size:' + em(SCALE_H) + ';vertical-align:' + EMDIST(baselineAdjustment + BRACKET_SHIFT * SCALE_V + BRACKET_SHIFT_2);
+		return (this.left.c ? scale_span(SCALE_V / SCALE_H, this.left.write(), 'bb l' + scaleClass, auxStyle) : '')
 		       + (this.content.write()).replace(/[\s\u2005\u2009\u205f]+((?:<\/i>)+)$/, '$1')
-		       + (this.right.c ? scale_span(SCALE_V / SCALE_H, this.right.write(), 'bb r', auxStyle) : '')
+		       + (this.right.c ? scale_span(SCALE_V / SCALE_H, this.right.write(), 'bb r' + scaleClass, auxStyle) : '')
 	}
 }
 
@@ -363,8 +373,8 @@ var DecoBox = function(content, deco){
 	this.deco = deco
 }
 DecoBox.prototype = new Box;
-DecoBox.prototype.write = function(){
-	return '<e style="text-decoration:' + this.deco + '">' + this.content.write() + '</e>'
+DecoBox.prototype.write = function(adjLeft, adjRight){
+	return '<e style="' + this.deco + '">' + this.content.write(adjLeft, adjRight) + '</e>'
 }
 
 var SSBox = function(base, sup, sub){
@@ -478,6 +488,7 @@ exports.BfBox = BfBox;
 exports.OpBox = OpBox;
 exports.SpBox = SpBox;
 exports.BCBox = BCBox;
+exports.BracketBox = BracketBox;
 
 exports.ScaleBox = ScaleBox;
 exports.RaiseBox = RaiseBox;
